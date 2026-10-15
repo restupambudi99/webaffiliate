@@ -7,24 +7,18 @@ It does not grant an OAuth client access or remove the owner's setup protection.
 """
 from pathlib import Path
 import datetime
+import email
 import os
 import re
 import shutil
 import subprocess
 import time
-import urllib.error
-import urllib.request
 
 VHOST = Path('/www/server/panel/vhost/openlitespeed/detail/affiliate.restupambudi.my.id.conf')
 ORIGIN = 'https://affiliate.restupambudi.my.id'
 OLD = 'context /_emdash/ {'
 PATTERN = r'^/_emdash/(?!(?:api/mcp|api/oauth/(?:register|token(?:/(?:refresh|revoke))?|device/(?:code|token)))$)'
 NEW = 'context exp:' + PATTERN + ' {'
-
-
-class NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
 
 
 def diagnostics():
@@ -38,16 +32,21 @@ def diagnostics():
 
 
 def response(path, method='GET'):
-    request = urllib.request.Request(ORIGIN + path, method=method,
-                                    data=b'[]' if method == 'POST' else None,
-                                    headers={'Content-Type': 'application/json', 'Origin': ORIGIN,
-                                             'X-EmDash-Request': '1'})
-    try:
-        result = urllib.request.build_opener(NoRedirect()).open(request, timeout=20)
-    except urllib.error.HTTPError as error:
-        result = error
-    with result:
-        return result.status if hasattr(result, 'status') else result.code, result.headers
+    # Test the local TLS virtual host directly. Cloudflare can reject generic
+    # server-side probe user agents before they reach this proxy. The separate
+    # Node MCP smoke check tests the public Cloudflare URL after this succeeds.
+    command = ['curl', '--silent', '--show-error', '--http1.1', '--max-time', '20',
+               '--noproxy', '*', '--resolve', 'affiliate.restupambudi.my.id:443:127.0.0.1',
+               '--dump-header', '-', '--output', '/dev/null', '--write-out', '\n%{http_code}',
+               '--request', method, '--header', 'Content-Type: application/json',
+               '--header', 'Origin: ' + ORIGIN, '--header', 'X-EmDash-Request: 1']
+    if method == 'POST':
+        command.extend(['--data-binary', '[]'])
+    command.append(ORIGIN + path)
+    result = subprocess.run(command, capture_output=True, text=True, check=True)
+    raw_headers, status = result.stdout.rsplit('\n', 1)
+    headers = email.message_from_string(raw_headers.split('\n', 1)[1])
+    return int(status), headers
 
 
 def verify():
@@ -104,7 +103,7 @@ def main():
             try:
                 verify()
                 break
-            except (RuntimeError, urllib.error.URLError):
+            except (RuntimeError, subprocess.CalledProcessError):
                 if attempt == 4:
                     raise
                 time.sleep(1)

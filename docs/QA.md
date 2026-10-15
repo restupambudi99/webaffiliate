@@ -2,6 +2,16 @@
 
 Validasi selesai pada 15 Oktober 2026 (Asia/Bangkok). Source aplikasi berada pada repository ini; draft editorial belum menjadi artikel publik yang sudah disetujui.
 
+## Integrasi MCP — 15 Oktober 2026
+
+- MCP native telah dibangun dan dipasang pada VPS; service tetap aktif dan pengaturan judul/tagline CMS muncul di halaman live.
+- [GitHub Actions integrasi MCP](https://github.com/restupambudi99/webaffiliate/actions/runs/38725031278) lulus, termasuk type check, build, dan pengujian pengamanan/editorial/MCP/identitas.
+- Pengujian domain publik dengan `node scripts/check-mcp.mjs --require-admin-protection`: **8 lulus, 0 gagal**. Discovery menunjuk HTTPS publik; PKCE S256 dan DCR tersedia; request tanpa token/token tidak sah ditolak; input OAuth tidak valid ditolak; admin/setup tetap 401.
+- Proxy origin HTTPS diperiksa langsung dengan sertifikat tervalidasi, tanpa mengikuti redirect. Setup biasa/terenkode tetap Basic Auth; MCP canonical memakai Bearer; alias MCP ditolak; input tidak valid pada enam endpoint OAuth mencapai validasi native. Cloudflare tetap aktif; pengujian publik dilakukan terpisah memakai client Node.
+- Codex lokal telah memiliki entri `myjourney` dan `emdash-docs`. Autentikasi OAuth situs, panggilan baca berizin, penulisan artikel melalui client AI, serta login pemilik belum dinyatakan selesai. Pemilik masih perlu mendaftarkan passkey dan menyelesaikan consent pada client yang dipakai.
+
+Panduan dan konfigurasi client ada di [koneksi AI](AI-CONNECTIONS.md).
+
 - [Preview desain online privat](https://desk-edit-workspace-journal.nick-hatzis-1514.chatgpt.site)
 - [Website produksi pada VPS melalui Cloudflare](https://affiliate.restupambudi.my.id/)
 - [GitHub Actions yang lulus untuk aplikasi](https://github.com/restupambudi99/webaffiliate/actions/runs/38659970183)
