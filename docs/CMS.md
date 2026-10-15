@@ -22,7 +22,7 @@ Untuk melihat perilaku produksi, jalankan `npm run dev` dengan `STAGING_PREVIEW=
 
 ## Mengaktifkan admin
 
-Wizard pertama meminta judul situs, nama dan email pemilik, lalu passkey. Pemilik perlu menyimpan passkey sendiri melalui Windows Hello, pengelola password, atau security key. Tidak ada password admin bawaan, akun demo, atau bypass login dalam proyek.
+Wizard pertama meminta judul situs, nama dan email pemilik, lalu passkey. Pemilik perlu menyimpan passkey sendiri melalui Windows Hello, pengelola password, atau security key. Tidak ada password admin bawaan, akun demo, atau bypass login dalam proyek. Email pada langkah passkey awal tidak diverifikasi; browser pertama yang menyelesaikan registrasi passkey menjadi admin. Karena itu, wizard produksi tidak boleh dibiarkan terbuka sebelum pemilik siap.
 
 Pilih opsi sample content di wizard bila ingin memasukkan kerangka artikel ke CMS. Seluruh contoh masuk sebagai **draft**. Untuk situs Node di alamat selain localhost, atur `SITE_URL` dan `EMDASH_SITE_URL` ke origin HTTPS situs sebelum wizard digunakan. Passkey terikat domain; setelah domain berubah, ikuti prosedur pemindahan domain EmDash dan daftarkan passkey di alamat yang baru.
 
@@ -46,38 +46,53 @@ Field **Verified product references** (`product_references`) menyimpan array obj
 
 Seed di `seed/seed.json` dibangun dari `scripts/build-seed.mjs` dan contoh `src/data/guides.ts`. Seed mengatur model awal; deployment ulang **tidak** menimpa konten database. Perubahan model situs yang sudah dipakai dilakukan melalui admin, lalu ekspor baseline jika dibutuhkan. Jangan menerapkan `--on-conflict update` sembarangan ke database produksi.
 
-## Deployment Node
+## Produksi utama: Node di VPS pemilik
 
-```powershell
-# Pastikan .env produksi menggunakan origin hosting yang nyata dan staging=false.
+Produksi menggunakan VPS Ubuntu 22.04 yang sudah dimiliki pemilik, dengan Node.js 24.11, SQLite, dan penyimpanan unggahan lokal. Cloudflare melayani DNS dan SSL di depan VPS; aplikasi dan CMS berjalan di server Node. Media dikelola langsung melalui panel EmDash yang sama dengan artikel.
+
+Konfigurasi ini tidak membutuhkan R2, langganan Workers, aktivasi pembayaran, atau layanan media tambahan. Biaya VPS yang sudah dimiliki tetap mengikuti pengaturan pemilik. Aplikasi tidak mengaktifkan subscription baru. Prototipe media KV belum dirilis dan tidak dipakai pada produksi karena karakteristik konsistensinya tidak cocok dengan kebutuhan media CMS ini.
+
+Urutan validasi dan build dari direktori proyek:
+
+```sh
+npm ci
 npm run seed:build
 npm run seed:validate
 npm run check
 npm run build
-npm start
 ```
 
-Hosting Node memerlukan disk persisten untuk SQLite dan unggahan, HTTPS reverse proxy, dan cadangan data. Atur `HOST`, `PORT`, `EMDASH_DATABASE_URL`, dan `EMDASH_UPLOADS_DIR` sesuai hosting. `SITE_URL` dan `EMDASH_SITE_URL` harus tersedia saat build dan runtime. SQLite lokal tidak cocok dengan hosting yang menghapus disk setiap deploy.
+Server standalone dijalankan oleh service VPS, di belakang reverse proxy HTTPS. Tetapkan `HOST` ke loopback, `PORT` ke port internal yang dipilih saat provisioning, `EMDASH_DATABASE_URL` ke SQLite persisten, dan `EMDASH_UPLOADS_DIR` ke direktori unggahan persisten. Direktori data harus berada di luar `dist/` dan tidak boleh dihapus atau ditimpa saat rilis aplikasi diperbarui. Nama service, lokasi instalasi, dan port aktual dicatat dalam [panduan operasi VPS](VPS.md) setelah provisioning selesai; jangan menganggap contoh path sebagai lokasi produksi yang telah dipastikan.
 
-## Deployment Cloudflare
+Variabel produksi harus memakai `STAGING_PREVIEW=false`, `AFFILIATE_MODE=editorial_only`, serta `SITE_URL` dan `EMDASH_SITE_URL` bernilai `https://affiliate.restupambudi.my.id`. Origin tersebut harus tersedia saat build dan runtime. Simpan `EMDASH_ENCRYPTION_KEY` di konfigurasi environment privat, bukan di Git. Jangan memakai kunci development atau menggantinya tanpa prosedur pemulihan data yang sesuai.
 
-Konfigurasi `astro.config.cloudflare.mjs` menghubungkan Workers ke D1 (`DB`) dan R2 (`MEDIA`); `src/worker.ts` mengaktifkan scheduled publish. Output ada di `dist-cloudflare/`, terpisah dari build Node `dist/`. Wrangler otomatis membaca konfigurasi build yang diarahkan oleh `.wrangler/deploy/config.json`; jalankan build Cloudflare tepat sebelum deploy. Domain pribadi dapat menyusul karena Workers menyediakan alamat `workers.dev`.
+Gunakan satu lokasi SQLite dan satu direktori unggahan yang sama pada setiap restart dan deployment. Cadangkan database, unggahan, dan kunci enkripsi sebagai satu set yang dapat dipulihkan. Pembaruan kode tidak boleh menimpa database produksi dengan `data.db` development atau menjalankan seed dengan mode update tanpa pemeriksaan. SQLite memerlukan disk persisten; jangan memindahkan konfigurasi ini ke hosting yang menghapus disk saat deployment.
 
-```powershell
-npx wrangler login
-# Simpan kunci lewat secret store; jangan tulis kunci di wrangler.jsonc.
-npx wrangler secret put EMDASH_ENCRYPTION_KEY
-npm run build:cloudflare
-npx wrangler deploy
-```
+### Setup pemilik dan penahanan CMS produksi
 
-Wrangler modern memprovisikan database dan bucket bernama pada deployment pertama sesuai `wrangler.jsonc`. Akun Cloudflare perlu terautentikasi dan R2 harus tersedia. Deploy ulang memakai nama resource yang sama. Wizard pertama pada alamat Workers memasang model, lalu pemilik menyelesaikan passkey. Kunci secret wajib dipasang pada Worker yang sama. Jangan menyalin database SQLite pengembangan sebagai state produksi D1; gunakan prosedur ekspor/import resmi jika konten perlu dipindahkan.
+Pada Node produksi, `CMS_ADMIN_ENABLED` bernilai `"false"` secara default. Penahanan ini menutup seluruh path `/_emdash` dan `/_emdash/*`, termasuk wizard, API setup, dan media library, dengan HTTP 503 serta `private, no-store`. Halaman publik dan gambar tema statis tetap tersedia. Penahanan produksi tidak mengubah perilaku `npm run dev` atau `npm run dev:staging` lokal.
 
-Gambar website sudah disiapkan sebagai file WebP dengan ukuran desktop/mobile, sehingga adapter memakai `imageService: 'passthrough'` dan tidak memprovisikan layanan Images. Binding KV `SESSION` tetap diperlukan: EmDash menyimpan session login editor melalui Astro session. Adapter memprovisikan KV secara otomatis. Profil, konten, dan metadata CMS disimpan di D1, dan media di R2.
+Saat pemilik hadir dan siap menyimpan passkey, pastikan HTTPS pada domain final sudah aktif. Ubah `CMS_ADMIN_ENABLED` dalam environment service VPS menjadi `"true"`, lalu restart service mengikuti [panduan VPS](VPS.md). Aktifkan hanya ketika pemilik siap menyelesaikan wizard pada sesi yang sama.
 
-Build dapat dilakukan tanpa kunci enkripsi produksi; kunci dibaca saat runtime untuk rahasia plugin. Untuk CI build, tidak perlu membuat secret `EMDASH_BUILD_KEY`. Simpan `EMDASH_ENCRYPTION_KEY` di secret store Worker sebelum fitur plugin yang menyimpan rahasia digunakan. Gunakan login permanen untuk deployment yang akan dipertahankan: `wrangler deploy --temporary` perlu diklaim dalam 60 menit dan daftar resource sementara tidak mencakup R2, sehingga tidak digunakan untuk deployment CMS ini.
+Pemilik membuka `https://affiliate.restupambudi.my.id/_emdash/admin/setup`, mengisi judul situs serta email/nama miliknya, memilih **Include sample content** bila ingin memasukkan 10 kerangka artikel draft, kemudian mendaftarkan passkey sendiri. Jangan memakai kredensial buatan atau bypass development. EmDash menyelesaikan setup setelah registrasi passkey berhasil. Pastikan login pemilik berhasil sebelum menutup sesi.
 
-Jangan mengaktifkan cache HTML bersama tanpa invalidasi publish dan aturan `private, no-store` untuk rute pribadi. Astro menghasilkan halaman publik dengan JavaScript minimal; file statis menerima cache terpisah. EmDash admin/API menetapkan private/no-store. D1 + R2 memenuhi kebutuhan CMS persisten di Cloudflare; preview statis saja tidak menyediakan CMS yang berjalan.
+Setelah akun pemilik terbentuk, **pertahankan `CMS_ADMIN_ENABLED="true"`** untuk operasi normal. Autentikasi EmDash melindungi fungsi admin, sedangkan URL media CMS tetap perlu dapat diakses pembaca. Jangan mengembalikan flag ke false setelah selesai menyunting: media di bawah `/_emdash` akan ikut tertahan dan gambar pada artikel publik dapat gagal dimuat. Gunakan false hanya untuk maintenance yang disengaja, kemudian kembalikan true setelah selesai.
+
+Struktur seed dan migrasi CMS dipasang pada database produksi yang baru sesuai alur setup EmDash. Contoh yang dimasukkan tetap draft; jangan mengimpor user, passkey, atau database development sebagai identitas pemilik. Sesudah setup, pemeriksaan read-only pada SQLite aktual harus menunjukkan akun pemilik, credential passkey, `setup_complete=true`, origin final, dan artikel contoh berstatus draft bila opsi sample dipilih. Gunakan lokasi database yang tercatat di panduan VPS.
+
+Tanpa provider email yang dikonfigurasi, magic link, undangan email, dan pemulihan lewat email belum tersedia. Pemilik sebaiknya menyimpan passkey cadangan melalui menu keamanan setelah login. Tidak ada akun admin demo atau password bawaan untuk diserahkan.
+
+### Media dan cache pada VPS
+
+Unggah gambar melalui **Media library** EmDash; file disimpan pada direktori lokal yang dikonfigurasi oleh `EMDASH_UPLOADS_DIR`, sementara metadata berada di SQLite. Gambar tema tetap merupakan file statis di `public/`. Batas upload efektif mengikuti konfigurasi aplikasi dan reverse proxy VPS, bukan kuota prototipe KV. Detail batas yang dipasang harus dicatat di panduan VPS setelah diverifikasi.
+
+Jangan mengaktifkan cache HTML bersama tanpa invalidasi saat publish. Rute admin/API dan respons pribadi harus tetap `private, no-store`. Cloudflare tidak boleh menyimpan cache halaman setup, login, maupun respons editor. Cache aset publik diatur terpisah agar tidak menahan perubahan konten atau sesi CMS.
+
+## Scaffold alternatif Cloudflare Workers
+
+Repository mempertahankan scaffold alternatif `astro.config.cloudflare.mjs` untuk Workers dengan D1 (`DB`), R2 (`MEDIA`), dan KV (`SESSION`) untuk sesi autentikasi. Scaffold ini **tidak dipakai pada produksi VPS**. Prototipe media `MEDIA_KV` tidak dirilis sebagai penyimpanan produksi dan tidak menggantikan penyimpanan lokal VPS.
+
+Output build alternatif berada di `dist-cloudflare/`, terpisah dari `dist/` Node. `workers_dev` dan `preview_urls` dinonaktifkan pada scaffold. Jangan menjalankan deployment Workers, mengaktifkan R2, atau menambah billing sebagai bagian dari setup produksi saat ini. Cloudflare pada arsitektur utama digunakan untuk DNS dan SSL; database, sesi aplikasi, serta file media dikelola oleh aplikasi Node di VPS.
 
 ## Sebelum mengaktifkan monetisasi
 
@@ -95,4 +110,4 @@ Mode awal `editorial_only`, tanpa contoh tag Associates. Isi tag milik pemilik d
 
 Versi paket diperiksa langsung di registry npm pada 14 Oktober 2026. API dan kontrak plugin juga diperiksa terhadap source paket EmDash 1.2.0.
 
-`node scripts/test-cms-policy.mjs` memeriksa bypass tautan CMS, sanitasi sumber, penolakan isi kosong, bentuk referensi produk, dan konten import yang tidak didukung.
+`node scripts/test-cms-policy.mjs` memeriksa bypass tautan CMS, sanitasi sumber, penolakan isi kosong, bentuk referensi produk, dan konten import yang tidak didukung. `node scripts/test-cms-bootstrap.mjs` memeriksa penutupan CMS saat flag hilang/nonaktif, path API setup, path yang di-encode, header no-store, serta akses halaman publik.

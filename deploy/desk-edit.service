@@ -1,0 +1,30 @@
+[Unit]
+Description=Desk Edit Astro and EmDash CMS
+After=network.target
+
+[Service]
+Type=simple
+User=deskedit
+Group=deskedit
+WorkingDirectory=/opt/desk-edit/app
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=4321
+Environment=CMS_ADMIN_ENABLED=false
+EnvironmentFile=/etc/desk-edit.env
+ExecStart=/usr/local/bin/node dist/server/entry.mjs
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+UMask=0027
+StateDirectory=desk-edit
+StateDirectoryMode=0750
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ReadWritePaths=/var/lib/desk-edit
+
+[Install]
+WantedBy=multi-user.target

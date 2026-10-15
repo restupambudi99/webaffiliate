@@ -1,11 +1,14 @@
 import handler, { createScheduledHandler, PluginBridge } from '@emdash-cms/cloudflare/worker';
 import { httpsRedirectDestination } from '../site.config.mjs';
+import { cmsBootstrapResponse } from './lib/cms-bootstrap';
 
 export { PluginBridge };
 
 const fetchRequest = async (request: Request, env: unknown, ctx: unknown): Promise<Response> => {
   const destination = httpsRedirectDestination(request.url);
   if (destination) return Response.redirect(destination, 308);
+  const bootstrapHold = cmsBootstrapResponse(request, env);
+  if (bootstrapHold) return bootstrapHold;
   if (!handler.fetch) return new Response('Server unavailable', { status: 503 });
   return handler.fetch(request, env, ctx);
 };

@@ -4,7 +4,7 @@ Independent home workspace publication built with **Astro 6 + EmDash CMS 1.2**. 
 
 Brand: **Desk Edit** · Audience: English-speaking US home-office readers · Contact: `nikolasjuan34@gmail.com`.
 
-Production hostname: **https://affiliate.restupambudi.my.id**. Cloudflare custom-domain routing and HTTP → HTTPS redirect are configured. DNS activation and a valid TLS certificate must be verified after account deployment; see [domain setup](docs/DOMAIN.md).
+Production hostname: **https://affiliate.restupambudi.my.id**. The primary deployment is the owner's existing Ubuntu 22.04 VPS, using Node 24.11, SQLite, and local media storage. Cloudflare provides DNS and SSL in front of the VPS. Verify the deployed origin, DNS routing, and TLS using the [VPS operations guide](docs/VPS.md) and [domain setup](docs/DOMAIN.md).
 
 ## Run locally
 
@@ -29,20 +29,19 @@ npm run build
 npm start
 ```
 
-## Cloudflare hosting
+## Production hosting on the existing VPS
 
-The Cloudflare build uses Workers + D1 (`DB`) + R2 (`MEDIA`) and KV for CMS authentication sessions. It uses no Cloudflare Images binding. A custom domain can be added later; Workers supplies a `workers.dev` address first.
+The server runs the Astro Node application with persistent SQLite content and a local uploads directory. Editors manage articles and upload images in the same **EmDash admin panel**. This deployment adds no media-service subscription or payment activation and requires no R2, Workers subscription, or external media server. It uses the VPS the owner already has.
 
-```sh
-npx wrangler login
-npm run build:cloudflare
-npx wrangler secret put EMDASH_ENCRYPTION_KEY
-npx wrangler deploy
-```
+Build with `npm run build` and run the standalone server behind the VPS HTTPS reverse proxy. Keep the application port bound to loopback. Set `SITE_URL` and `EMDASH_SITE_URL` to `https://affiliate.restupambudi.my.id`, and configure persistent `EMDASH_DATABASE_URL` and `EMDASH_UPLOADS_DIR` locations outside disposable build output. The service name, installed paths, and port are recorded in [VPS operations](docs/VPS.md) after provisioning. Back up the database, uploaded files, and encryption key together.
 
-Use the **generated key from your ignored `.env`** as the Worker secret. Never commit it, and keep a backup. Configure `SITE_URL` and `EMDASH_SITE_URL` to the final Workers origin before owner onboarding. See [complete CMS/deployment instructions](docs/CMS.md).
+The production application starts with `CMS_ADMIN_ENABLED=false`, holding all `/_emdash` routes, including setup APIs and uploaded CMS media, until the owner is ready to register a passkey. Enable it for owner onboarding, then **leave it true after the owner account is created** so normal authentication, editing, and public CMS media work. Use false only for a deliberate maintenance hold; it also interrupts media delivery. Local development is unaffected by the production hold. There are no fabricated admin credentials.
 
-Cloudflare authentication and owner passkey setup require the owner's account. The separate private online design preview is a static preview and does not host the CMS admin.
+Use the generated `EMDASH_ENCRYPTION_KEY` from the private environment configuration, keep a backup, and never commit it. See the [CMS and owner setup instructions](docs/CMS.md). The separate private online design preview is a static preview and does not host the CMS admin.
+
+## Optional Cloudflare Workers scaffold
+
+The repository retains an alternative Workers build scaffold with D1 content, R2 media, and KV authentication sessions. It is **not the production deployment** and is not required for the VPS. The experimental KV media adapter was not released; its consistency limitations ruled it out for this project. Do not activate paid Cloudflare services or deploy this alternative as part of the current VPS setup. `workers.dev` and preview URLs remain disabled in the scaffold.
 
 ## Editorial and monetization controls
 

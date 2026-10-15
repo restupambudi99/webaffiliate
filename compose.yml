@@ -1,0 +1,53 @@
+name: desk-edit-vps
+
+services:
+  app:
+    image: desk-edit-vps:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SITE_URL: ${SITE_URL:-https://affiliate.restupambudi.my.id}
+    init: true
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "4321"
+      SITE_URL: ${SITE_URL:-https://affiliate.restupambudi.my.id}
+      EMDASH_SITE_URL: ${SITE_URL:-https://affiliate.restupambudi.my.id}
+      EMDASH_ENCRYPTION_KEY: ${EMDASH_ENCRYPTION_KEY:?Set a private EmDash encryption key in .env before starting}
+      EMDASH_DATABASE_URL: file:/app/data/desk-edit.db
+      EMDASH_UPLOADS_DIR: /app/data/uploads
+      CMS_ADMIN_ENABLED: ${CMS_ADMIN_ENABLED:-false}
+      STAGING_PREVIEW: "false"
+    ports:
+      - "127.0.0.1:${APP_PORT:-4321}:4321"
+    volumes:
+      - desk_edit_data:/app/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4321/', {signal: AbortSignal.timeout(5000)}).then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 6s
+      start_period: 60s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  desk_edit_data:
+    name: desk-edit-vps-data

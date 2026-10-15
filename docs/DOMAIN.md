@@ -1,29 +1,29 @@
 # Domain dan HTTPS
 
-Alamat produksi: **https://affiliate.restupambudi.my.id**.
+Alamat produksi: **https://affiliate.restupambudi.my.id**. Arsitektur yang dipilih pemilik adalah Cloudflare DNS/proxy pada paket Free, dengan Astro + EmDash Node dan media lokal di VPS. Konfigurasi Workers merupakan opsi alternatif yang tidak digunakan untuk hosting produksi ini.
 
-Konfigurasi source sudah menetapkan origin HTTPS untuk Astro, canonical, sitemap, dan EmDash. Wrangler hanya mengikat hostname `affiliate.restupambudi.my.id` sebagai Worker Custom Domain. Request HTTP untuk hostname ini dialihkan 308 ke HTTPS dengan path dan query yang sama. Domain induk dan subdomain lain tidak masuk rule redirect.
+## DNS
 
-## Status aktivasi
+Pada 15 Oktober 2026, nameserver Hostinger diganti menjadi `kai.ns.cloudflare.com` dan `malavika.ns.cloudflare.com`. Resolver publik sudah mengembalikan keduanya, dan Cloudflare mengonfirmasi aktivasi zone.
 
-Pada 15 Oktober 2026, zone ditambahkan pada paket Free di akun Cloudflare pemilik. Nameserver di Hostinger sudah berhasil diganti dari `lunar.dns-parking.com` / `solar.dns-parking.com` menjadi:
+Sebelum cutover, daftar DNS Hostinger dicocokkan dengan Cloudflare: A `@` ke `76.76.21.21` (TTL 60) dan CNAME `www` ke `cname.vercel-dns.com` (TTL 300). Record induk tersebut dipertahankan DNS-only untuk website Vercel yang sudah ada. Tidak ada record email pada sumber. Ekspor zone dibuat sebelum perubahan.
 
-- `kai.ns.cloudflare.com`
-- `malavika.ns.cloudflare.com`
+Record `affiliate` diarahkan hanya ke VPS yang ditentukan pemilik. Setelah sertifikat origin valid, proxy Cloudflare diaktifkan untuk subdomain ini. Tidak ada wildcard atau perubahan tujuan domain induk.
 
-Hostinger menampilkan konfirmasi **Nameservers changed!**. Cloudflare masih menampilkan **Waiting for your registrar to propagate your new nameservers** pada pemeriksaan sesudah penyimpanan. Status Active dan penerbitan sertifikat masih harus diverifikasi setelah propagasi. Wrangler CLI juga memerlukan otorisasi deployment yang terpisah dari login dashboard.
+## HTTPS dan cache
 
-Sebelum cutover, daftar DNS lengkap Hostinger dicocokkan dengan Cloudflare: A `@` ke `76.76.21.21` (TTL 60), dan CNAME `www` ke `cname.vercel-dns.com` (TTL 300). Kedua record dipertahankan DNS-only agar website utama tetap langsung menuju Vercel. Tidak ada record email pada daftar sumber. Ekspor zone dibuat sebelum perubahan.
+Origin HTTPS, canonical, sitemap, dan URL EmDash menggunakan hostname final yang sama. Sertifikat origin dipasang pada virtual host OpenLiteSpeed khusus subdomain. Mode Cloudflare memakai **Full (strict)**; koneksi dari browser ke Cloudflare dan dari Cloudflare ke VPS sama-sama terenkripsi. Redirect HTTP ke HTTPS hanya berlaku pada hostname affiliate dan mempertahankan path/query.
 
-## Aktivasi Cloudflare
+Cache Cloudflare berlaku untuk file statis yang aman seperti gambar, CSS, dan JavaScript. HTML, admin, API CMS, serta session tidak diberi aturan Cache Everything. Respons privat tetap no-store. Tidak mengaktifkan layanan R2, Images, atau subscription berbayar.
 
-1. Login ke akun Cloudflare yang memiliki zone `restupambudi.my.id`; periksa status zone dan resource website yang ada.
-2. Zone harus **Active** untuk Workers Custom Domains. Jika masih Pending, cocokkan nameserver publik dengan nameserver yang benar-benar ditetapkan Cloudflare. Sebelum mengganti nameserver induk, cocokkan semua record website/email yang masih dipakai; perubahan ini tidak dilakukan otomatis oleh proyek.
-3. Jalankan `npx wrangler login`, simpan secret EmDash, lalu `npm run deploy:cloudflare`. Konfigurasi route memakai hostname yang sudah diminta, bukan wildcard domain induk.
-4. Cloudflare membuat DNS dan sertifikat TLS untuk Worker Custom Domain. Tunggu status hostname dan sertifikat aktif; jangan menambahkan CNAME buatan ke alamat workers.dev sebagai pengganti proses ini.
-5. Verifikasi `https://affiliate.restupambudi.my.id` dengan validasi sertifikat normal, lalu pastikan HTTP mengarah 308 ke HTTPS. Tidak memakai opsi untuk mengabaikan kesalahan sertifikat.
-6. Selesaikan setup passkey EmDash langsung di origin HTTPS ini, lalu review dan publikasikan konten. Alamat ini juga yang dicatat pada register Site sebelum monetisasi.
+## Pemeriksaan rilis
 
-Untuk sertifikat origin tambahan pada hosting Node di belakang Cloudflare, gunakan sertifikat origin yang valid dan mode Full (strict). Konfigurasi origin terpisah ini tidak diperlukan oleh Worker yang berjalan langsung di Cloudflare.
+- Resolusi DNS publik dan proxy subdomain.
+- Sertifikat HTTPS dengan validasi normal, tanpa mengabaikan error TLS.
+- Redirect HTTP, halaman publik, aset, dan halaman 404.
+- Setup pemilik ditahan hingga pemilik siap membuat passkey sendiri; kemudian CMS diaktifkan untuk penggunaan normal.
+- Record domain induk tetap mempertahankan tujuan sebelumnya.
 
-Referensi: [Workers Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/), [Full (strict)](https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/full-strict/).
+Status pemeriksaan langsung dicatat setelah konfigurasi server dan DNS diterapkan.
+
+Referensi: [Full (strict)](https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/full-strict/), [Cache default behavior](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/).

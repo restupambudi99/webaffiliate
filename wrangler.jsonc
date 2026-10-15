@@ -1,21 +1,48 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "desk-edit",
-  "main": "./src/worker.ts",
-  "compatibility_date": "2026-10-14",
-  "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
-  "routes": [{ "pattern": "affiliate.restupambudi.my.id", "custom_domain": true }],
-  "vars": {
-    "SITE_URL": "https://affiliate.restupambudi.my.id",
-    "EMDASH_SITE_URL": "https://affiliate.restupambudi.my.id",
-    "STAGING_PREVIEW": "false",
-    "AFFILIATE_MODE": "editorial_only",
-    "AMAZON_SITE_REGISTERED": "false",
-    "CONTACT_EMAIL": "nikolasjuan34@gmail.com"
-  },
-  "d1_databases": [{ "binding": "DB", "database_name": "desk-edit-content" }],
-  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "desk-edit-media" }],
-  "triggers": { "crons": ["* * * * *"] },
-  "observability": { "enabled": true }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "desk-edit",
+	"main": "./src/worker.ts",
+	"compatibility_date": "2026-10-14",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"workers_dev": false,
+	"preview_urls": false,
+	"routes": [
+		{
+			"pattern": "affiliate.restupambudi.my.id",
+			"custom_domain": true
+		}
+	],
+	"vars": {
+		"SITE_URL": "https://affiliate.restupambudi.my.id",
+		"EMDASH_SITE_URL": "https://affiliate.restupambudi.my.id",
+		"STAGING_PREVIEW": "false",
+		"CMS_ADMIN_ENABLED": "false",
+		"AFFILIATE_MODE": "editorial_only",
+		"AMAZON_SITE_REGISTERED": "false",
+		"CONTACT_EMAIL": "nikolasjuan34@gmail.com"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "desk-edit-content",
+			"database_id": "86c6e78c-7b30-48e4-b3e4-9592ef6ee074"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "SESSION",
+			"id": "a2076b53202a4f7cb476b958a7a73b2b"
+		}
+	],
+	"r2_buckets": [{ "binding": "MEDIA", "bucket_name": "desk-edit-media" }],
+	"triggers": {
+		"crons": [
+			"* * * * *"
+		]
+	},
+	"observability": {
+		"enabled": true
+	}
 }

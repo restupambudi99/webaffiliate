@@ -19,5 +19,6 @@ jobs:
       - run: npm run seed:validate
       - run: node scripts/test-safety.mjs
       - run: node scripts/test-cms-policy.mjs
+      - run: node scripts/test-cms-bootstrap.mjs
       - run: npm run check
       - run: npm run build
