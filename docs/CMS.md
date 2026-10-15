@@ -82,7 +82,9 @@ Gunakan satu lokasi SQLite dan satu direktori unggahan yang sama pada setiap res
 
 ### Setup pemilik dan penahanan CMS produksi
 
-Passkey awal pemilik belum dibuat. Node produksi saat ini memakai `CMS_ADMIN_ENABLED="false"`, yang juga merupakan nilai default. Penahanan ini menutup seluruh path `/_emdash` dan `/_emdash/*`, termasuk wizard, API setup, dan media library, dengan HTTP 503 serta `private, no-store`. Halaman publik dan gambar tema statis tetap tersedia. Penahanan produksi tidak mengubah perilaku `npm run dev` atau `npm run dev:staging` lokal.
+Passkey awal pemilik belum dibuat. Setelah pemilik menyatakan siap, produksi diaktifkan dengan `CMS_ADMIN_ENABLED="true"` di balik realm autentikasi sementara OpenLiteSpeed pada `/_emdash/`. Pemeriksaan menunjukkan request anonim mendapat 401 dan request setup pemilik yang terautentikasi mendapat 200. Detail akses sementara disimpan privat di luar Git; realm dilepas sesudah pemilik mendaftarkan passkey dan berhasil login.
+
+Default source `CMS_ADMIN_ENABLED="false"` tetap dipakai untuk deployment baru atau maintenance yang disengaja. Flag false menutup seluruh path `/_emdash` dan `/_emdash/*`, termasuk wizard, API setup, dan media library, dengan HTTP 503 serta `private, no-store`. Halaman publik dan gambar tema statis tetap tersedia. Penahanan produksi tidak mengubah perilaku `npm run dev` atau `npm run dev:staging` lokal.
 
 Saat pemilik hadir dan siap menyimpan passkey, gunakan HTTPS pada domain final yang sudah aktif. Ubah `CMS_ADMIN_ENABLED` dalam `/etc/desk-edit.env` menjadi `"true"`, lalu jalankan `sudo systemctl restart desk-edit` mengikuti [panduan VPS](VPS.md). Aktifkan hanya ketika pemilik siap menyelesaikan wizard pada sesi yang sama.
 
