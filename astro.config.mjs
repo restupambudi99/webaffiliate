@@ -5,6 +5,7 @@ import emdash, { local } from 'emdash/astro';
 import { sqlite } from 'emdash/db';
 import { fileURLToPath } from 'node:url';
 import { productionOrigin, productionHostname } from './site.config.mjs';
+import { passwordAuth } from './src/auth/provider.mjs';
 
 try { process.loadEnvFile('.env'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
 const site = process.env.SITE_URL || process.env.EMDASH_SITE_URL || productionOrigin;
@@ -26,6 +27,7 @@ export default defineConfig({
       siteUrl: site || undefined,
       // OAuth/PAT authentication and per-user scopes are enforced by EmDash.
       mcp: true,
+      authProviders: [passwordAuth()],
       plugins: [{
         id: 'desk-edit-editorial-gate',
         version: '1.0.0',

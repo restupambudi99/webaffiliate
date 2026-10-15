@@ -22,6 +22,7 @@ jobs:
       - run: node scripts/test-cms-bootstrap.mjs
       - run: node scripts/test-mcp-smoke.mjs
       - run: node scripts/test-mcp-access.mjs
+      - run: node scripts/test-password-auth.mjs
       - run: node scripts/test-site-presentation.mjs
       - run: npm run check
       - run: npm run build

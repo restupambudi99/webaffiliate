@@ -24,6 +24,8 @@ Untuk melihat perilaku produksi, jalankan `npm run dev` dengan `STAGING_PREVIEW=
 
 ## Mengaktifkan admin
 
+Instruksi wizard berikut berlaku untuk instalasi baru. Produksi MyJourney sudah menyelesaikan onboarding; gunakan status dan URL login pada bagian produksi di bawah, bukan mengulang wizard.
+
 Wizard pertama meminta judul situs, nama dan email pemilik, lalu passkey. Pemilik perlu menyimpan passkey sendiri melalui Windows Hello, pengelola password, atau security key. Tidak ada password admin bawaan, akun demo, atau bypass login dalam proyek. Email pada langkah passkey awal tidak diverifikasi; browser pertama yang menyelesaikan registrasi passkey menjadi admin. Karena itu, wizard produksi tidak boleh dibiarkan terbuka sebelum pemilik siap.
 
 Pilih opsi sample content di wizard bila ingin memasukkan kerangka artikel ke CMS. Seluruh contoh masuk sebagai **draft**. Untuk situs Node di alamat selain localhost, atur `SITE_URL` dan `EMDASH_SITE_URL` ke origin HTTPS situs sebelum wizard digunakan. Passkey terikat domain; setelah domain berubah, ikuti prosedur pemindahan domain EmDash dan daftarkan passkey di alamat yang baru.
@@ -82,21 +84,31 @@ Variabel produksi harus memakai `STAGING_PREVIEW=false`, `AFFILIATE_MODE=editori
 
 Gunakan satu lokasi SQLite dan satu direktori unggahan yang sama pada setiap restart dan deployment. Cadangkan database, unggahan, dan kunci enkripsi sebagai satu set yang dapat dipulihkan. Pembaruan kode tidak boleh menimpa database produksi dengan `data.db` development atau menjalankan seed dengan mode update tanpa pemeriksaan. SQLite memerlukan disk persisten; jangan memindahkan konfigurasi ini ke hosting yang menghapus disk saat deployment.
 
-### Setup pemilik dan penahanan CMS produksi
+### Status onboarding produksi — 15 Oktober 2026
 
-Passkey awal pemilik belum dibuat. Setelah pemilik menyatakan siap, produksi diaktifkan dengan `CMS_ADMIN_ENABLED="true"` di balik realm autentikasi sementara OpenLiteSpeed pada `/_emdash/`. Pemeriksaan menunjukkan request anonim mendapat 401 dan request setup pemilik yang terautentikasi mendapat 200. Detail akses sementara disimpan privat di luar Git; realm dilepas sesudah pemilik mendaftarkan passkey dan berhasil login.
+Pemeriksaan read-only database mengonfirmasi **1 user Admin, 1 credential passkey, dan `setup_complete=true`**. Akun pemilik adalah email Admin yang sudah terdaftar; email kontak publik tetap `nikolasjuan34@gmail.com`. Identitas pemilik dan credential lama tidak diganti. Username/password Basic Auth sementara sudah tidak diperlukan.
+
+Realm sementara OpenLiteSpeed telah dilepas dengan `deploy/complete-owner-setup.py`. Script memeriksa setup selesai dan credential milik Admin sebelum perubahan, mencadangkan vhost, membandingkan diagnostik, serta melakukan rollback bila pemeriksaan gagal. Autentikasi native EmDash tetap aktif. `deploy/configure-mcp-proxy.py` adalah alat historis sebelum pemilik pertama terbentuk; **jangan jalankan kembali pada instalasi aktif ini**.
+
+Sebelum penambahan login password, halaman login HTML mengembalikan 200 dan admin anonim diarahkan ke login dengan 302. API settings privat tetap 401; MCP anonim tetap 401 dengan challenge Bearer. POST setup ulang ditolak dengan 409, sedangkan pembuatan/verifikasi Admin pertama ditolak dengan 400. Ini catatan historis pengamanan onboarding, bukan verifikasi login password baru.
 
 Default source `CMS_ADMIN_ENABLED="false"` tetap dipakai untuk deployment baru atau maintenance yang disengaja. Flag false menutup seluruh path `/_emdash` dan `/_emdash/*`, termasuk wizard, API setup, dan media library, dengan HTTP 503 serta `private, no-store`. Halaman publik dan gambar tema statis tetap tersedia. Penahanan produksi tidak mengubah perilaku `npm run dev` atau `npm run dev:staging` lokal.
 
-Saat pemilik hadir dan siap menyimpan passkey, gunakan HTTPS pada domain final yang sudah aktif. Ubah `CMS_ADMIN_ENABLED` dalam `/etc/desk-edit.env` menjadi `"true"`, lalu jalankan `sudo systemctl restart desk-edit` mengikuti [panduan VPS](VPS.md). Aktifkan hanya ketika pemilik siap menyelesaikan wizard pada sesi yang sama.
+Produksi sekarang memakai **`CMS_ADMIN_ENABLED="true"`**. Pertahankan nilai ini untuk operasi normal. Autentikasi EmDash melindungi fungsi admin, sedangkan URL media CMS tetap perlu dapat diakses pembaca. Jangan mengembalikan flag ke false setelah selesai menyunting: media di bawah `/_emdash` akan ikut tertahan dan gambar pada artikel publik dapat gagal dimuat. Gunakan false hanya untuk maintenance yang disengaja, kemudian kembalikan true setelah selesai.
 
-Pemilik membuka `https://affiliate.restupambudi.my.id/_emdash/admin/setup`, mengisi judul situs serta email/nama miliknya, memilih **Include sample content** bila ingin memasukkan 10 kerangka artikel draft, kemudian mendaftarkan passkey sendiri. Jangan memakai kredensial buatan atau bypass development. EmDash menyelesaikan setup setelah registrasi passkey berhasil. Pastikan login pemilik berhasil sebelum menutup sesi.
+Jangan mengimpor user, passkey, atau database development sebagai identitas pemilik dan jangan mereset setup yang sudah selesai. Artikel contoh, bila dimasukkan, tetap draft sampai lolos review. Gunakan lokasi database yang tercatat di [panduan VPS](VPS.md) untuk pemeriksaan read-only dan cadangan.
 
-Setelah akun pemilik terbentuk, **pertahankan `CMS_ADMIN_ENABLED="true"`** untuk operasi normal. Autentikasi EmDash melindungi fungsi admin, sedangkan URL media CMS tetap perlu dapat diakses pembaca. Jangan mengembalikan flag ke false setelah selesai menyunting: media di bawah `/_emdash` akan ikut tertahan dan gambar pada artikel publik dapat gagal dimuat. Gunakan false hanya untuk maintenance yang disengaja, kemudian kembalikan true setelah selesai.
+### Login email/password dan pengaturan pertama
 
-Struktur seed dan migrasi CMS dipasang pada database produksi yang baru sesuai alur setup EmDash. Contoh yang dimasukkan tetap draft; jangan mengimpor user, passkey, atau database development sebagai identitas pemilik. Sesudah setup, pemeriksaan read-only pada SQLite aktual harus menunjukkan akun pemilik, credential passkey, `setup_complete=true`, origin final, dan artikel contoh berstatus draft bila opsi sample dipilih. Gunakan lokasi database yang tercatat di panduan VPS.
+Ekstensi proyek di `src/auth/` menyediakan rute melalui provider EmDash/Astro dan membuat session Astro nyata untuk user yang sama. Default `/_emdash/admin/login` diarahkan ke `/_emdash/admin/login/password`; `/_emdash/admin/login?method=passkey` mempertahankan metode lama. Login password tidak membutuhkan SMTP. **6 test password lulus; type check, build, deployment, dan login live belum diverifikasi.**
 
-Tanpa provider email yang dikonfigurasi, magic link, undangan email, dan pemulihan lewat email belum tersedia. Pemilik sebaiknya menyimpan passkey cadangan melalui menu keamanan setelah login. Tidak ada akun admin demo atau password bawaan untuk diserahkan.
+Pemilik memakai email Admin yang sudah terdaftar dan menentukan password sendiri, sepanjang 15–128 karakter. Operator VPS membuat berkas HTML privat melalui `scripts/password-owner-setup.ts`, dengan `MYJOURNEY_PASSWORD_DB=/var/lib/desk-edit/password-auth.db`, `EMDASH_DATABASE_URL` produksi, origin HTTPS, dan opsi `--output`. Petunjuk operator ada di [VPS](VPS.md). Script mengikat enrollment ke Admin yang sudah ada; tidak membuat akun baru.
+
+Tautan memakai fragment `#token=...`, berlaku satu jam, dan hanya sekali pakai; database menyimpan hash token. Jangan menyalin tautan atau berkas privat ke Git, uploads, isi artikel, pengaturan CMS, atau log. Hapus berkas HTML setelah dipakai. Untuk password yang sudah ada, penerbitan tautan baru memerlukan `--reset` secara eksplisit. Reset ini **tidak mencabut session lama atau token OAuth**; pencabutan akses tersebut merupakan tindakan terpisah.
+
+Password disimpan sebagai hash scrypt dengan salt acak, `N=65536`, `r=8`, `p=2` (kebutuhan dasar memori 64 MiB per pekerjaan). Maksimal dua pekerjaan KDF berjalan bersamaan. Pembatas percobaan disimpan persisten: 40/menit global dan 8/15 menit per email/jenis operasi. Request harus berasal dari origin yang tepat. State password berada di SQLite privat terpisah dan ikut dicadangkan, termasuk penanganan WAL yang konsisten.
+
+Magic link, undangan, dan pemulihan lewat email tetap belum tersedia tanpa provider email. Pengaturan/reset password di atas memakai jalur operator tanpa SMTP. Login password tidak menyetujui scope OAuth yang sebelumnya ditolak; setiap client tetap memerlukan consent dan pemeriksaan baca berizin. Tidak ada akun demo atau password bawaan.
 
 ### Media dan cache pada VPS
 

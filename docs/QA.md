@@ -1,14 +1,31 @@
 # MyJourney — hasil validasi
 
-Validasi selesai pada 15 Oktober 2026 (Asia/Bangkok). Source aplikasi berada pada repository ini; draft editorial belum menjadi artikel publik yang sudah disetujui.
+Catatan validasi pada 15 Oktober 2026 (Asia/Bangkok). Source aplikasi berada pada repository ini; draft editorial belum menjadi artikel publik yang sudah disetujui. Hasil baseline tidak otomatis memverifikasi ekstensi login terbaru.
 
-## Integrasi MCP — 15 Oktober 2026
+## Status terkini — ekstensi login email/password
+
+- Akun pemilik yang dipakai tetap email Admin yang sudah terdaftar; kontak publik tetap `nikolasjuan34@gmail.com`. User dan credential passkey lama dipertahankan.
+- Source menambahkan provider/rute Astro untuk email/password default, redirect `/_emdash/admin/login` ke `/_emdash/admin/login/password`, dan fallback `?method=passkey`. Implementasi membuat session Astro native setelah autentikasi berhasil; tidak membutuhkan SMTP.
+- **6 test password, type check 61 file tanpa error/warning/hint, build Node, serta integrasi HTTP database sementara lulus. Deployment VPS, enrollment password pemilik, dan login live versi baru masih menunggu verifikasi.** Tidak ada klaim bahwa password sudah dibuat atau client MCP sudah terhubung.
+- Pengaturan pertama memakai token sekali pakai terikat pemilik, kedaluwarsa satu jam, dengan hash token dalam SQLite privat terpisah. Generator hanya menulis HTML privat. Reset memerlukan `--reset` dan tidak mencabut session/token OAuth lama.
+- Scope OAuth yang ditolak tetap belum disetujui. Consent dan panggilan baca berizin perlu diperiksa sesudah login; keduanya tidak dianggap lulus oleh test password.
+
+## Onboarding pemilik — sebelum ekstensi password, 15 Oktober 2026
+
+- Pemeriksaan read-only produksi: **1 user Admin, 1 credential passkey, `setup_complete=true`**. Registrasi passkey selesai; login ulang native dan OAuth client belum diverifikasi terpisah.
+- `deploy/complete-owner-setup.py` telah melepas hanya realm Basic Auth sementara, setelah memeriksa Admin/passkey/setup selesai. Script memakai cadangan vhost, perbandingan diagnostik, pemeriksaan respons, dan rollback saat gagal.
+- [Login native EmDash](https://affiliate.restupambudi.my.id/_emdash/admin/login) mengembalikan HTML 200 tanpa password proxy. Admin anonim 302 ke login; API settings privat 401; MCP anonim 401 dengan challenge Bearer.
+- POST setup ulang ditolak 409 dan pembuatan/verifikasi Admin pertama ditolak 400. Tampilan setup HTML masih 200, tetapi API tetap menolak pembuatan pemilik baru.
+- Smoke MCP publik sesudah onboarding, **tanpa `--require-admin-protection`**: **6 lulus, 0 gagal**, dengan status admin 302/setup UI 200. Ini bukan pengujian OAuth atau operasi konten berizin.
+- Username/password Basic Auth lama tidak diperlukan. `configure-mcp-proxy.py` hanya historis sebelum onboarding; jangan jalankan kembali pada produksi ini.
+
+## Integrasi MCP — historis sebelum onboarding, 15 Oktober 2026
 
 - MCP native telah dibangun dan dipasang pada VPS; service tetap aktif dan pengaturan judul/tagline CMS muncul di halaman live.
 - [GitHub Actions integrasi MCP](https://github.com/restupambudi99/webaffiliate/actions/runs/38725031278) lulus, termasuk type check, build, dan pengujian pengamanan/editorial/MCP/identitas.
-- Pengujian domain publik dengan `node scripts/check-mcp.mjs --require-admin-protection`: **8 lulus, 0 gagal**. Discovery menunjuk HTTPS publik; PKCE S256 dan DCR tersedia; request tanpa token/token tidak sah ditolak; input OAuth tidak valid ditolak; admin/setup tetap 401.
+- Pengujian domain publik pada tahap Basic Auth dengan `node scripts/check-mcp.mjs --require-admin-protection`: **8 lulus, 0 gagal**. Discovery menunjuk HTTPS publik; PKCE S256 dan DCR tersedia; request tanpa token/token tidak sah ditolak; input OAuth tidak valid ditolak; admin/setup saat itu 401. Ekspektasi 401 ini tidak berlaku setelah realm sementara dilepas.
 - Proxy origin HTTPS diperiksa langsung dengan sertifikat tervalidasi, tanpa mengikuti redirect. Setup biasa/terenkode tetap Basic Auth; MCP canonical memakai Bearer; alias MCP ditolak; input tidak valid pada enam endpoint OAuth mencapai validasi native. Cloudflare tetap aktif; pengujian publik dilakukan terpisah memakai client Node.
-- Codex lokal telah memiliki entri `myjourney` dan `emdash-docs`. Autentikasi OAuth situs, panggilan baca berizin, penulisan artikel melalui client AI, serta login pemilik belum dinyatakan selesai. Pemilik masih perlu mendaftarkan passkey dan menyelesaikan consent pada client yang dipakai.
+- Codex lokal telah memiliki entri `myjourney` dan `emdash-docs`. Pada tahap pengujian historis ini passkey belum terdaftar; registrasinya kini selesai sebagaimana status terkini di atas. OAuth, panggilan baca berizin, dan penulisan melalui client AI belum dinyatakan selesai.
 
 Panduan dan konfigurasi client ada di [koneksi AI](AI-CONNECTIONS.md).
 
@@ -16,7 +33,7 @@ Panduan dan konfigurasi client ada di [koneksi AI](AI-CONNECTIONS.md).
 - [Website produksi pada VPS melalui Cloudflare](https://affiliate.restupambudi.my.id/)
 - [GitHub Actions yang lulus untuk aplikasi](https://github.com/restupambudi99/webaffiliate/actions/runs/38659970183)
 
-## Hasil
+## Baseline sebelum ekstensi password
 
 | Pemeriksaan | Hasil |
 | --- | --- |
@@ -29,12 +46,12 @@ Panduan dan konfigurasi client ada di [koneksi AI](AI-CONNECTIONS.md).
 | Pengamanan bootstrap | 2 pengujian lulus; default production CMS tertutup |
 | Browser Edge | 360, 768, 1440 px; tanpa horizontal overflow atau browser error |
 | Interaksi | Navigasi mobile/Escape, filter, pencarian, empty state, artikel, 404, CMS setup lulus |
-| Proteksi admin | API privat menolak akses anonim; passkey pemilik belum dibuat |
+| Proteksi admin | API privat anonim 401; admin 302 ke login native; passkey sudah terdaftar |
 | Preview statis | 21 halaman, 10 artikel, navigasi/filter/search lulus |
 | VPS Node | Build Linux lulus; service non-root aktif, SQLite/uploads/session persisten |
 | Domain dan SSL | Cloudflare Proxied + Full (strict), HTTPS 200, origin TLS valid, HTTP 308 |
 | Browser produksi | Beranda/gambar/menu mobile lulus pada 360 px; tanpa overflow |
-| Onboarding pemilik | Realm sementara: anonim 401, pemilik 200; passkey perlu dibuat pemilik |
+| Onboarding pemilik | Selesai: 1 Admin, 1 credential, setup_complete=true; Basic Auth sementara dilepas |
 
 ## Sampel performa
 
@@ -49,7 +66,7 @@ Ini sampel lab pada komputer pengembangan, bukan data pengunjung atau jaminan pe
 
 ## Yang masih memerlukan akun pemilik
 
-1. Selesaikan wizard EmDash dan daftarkan passkey sendiri pada domain produksi. Pilih sample content untuk memasukkan 10 draft, lalu periksa login sebelum pengaman sementara dilepas.
+1. Setelah versi password selesai diverifikasi/deploy, buat password sendiri melalui berkas enrollment privat, periksa login email/password, lalu selesaikan consent OAuth dan panggilan baca berizin. Akun pemilik sudah ada; tidak perlu mengulang wizard.
 2. Tinjau dan lengkapi penulis, editor, sumber, bukti hak media, konflik kepentingan, review konten, serta inventory privasi produksi sebelum menerbitkan artikel.
 3. Tag Associates aktual belum diberikan; monetisasi tetap `editorial_only`.
 

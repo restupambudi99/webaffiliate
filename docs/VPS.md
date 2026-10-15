@@ -31,6 +31,7 @@ Langkah verifikasi harus berhasil sebelum ekstraksi. Instalasi ini tidak menggan
 Direktori state persisten `/var/lib/desk-edit` menyimpan:
 
 - `content.db` serta file SQLite WAL/SHM bila ada.
+- `password-auth.db` untuk hash password, enrollment, dan pembatas percobaan pada ekstensi login baru; database ini privat dan terpisah dari konten CMS.
 - `uploads/` untuk media dan arsip EmDash.
 - `sessions/` untuk session filesystem Astro.
 
@@ -47,8 +48,9 @@ EMDASH_SITE_URL=https://affiliate.restupambudi.my.id
 EMDASH_DATABASE_URL=file:/var/lib/desk-edit/content.db
 EMDASH_UPLOADS_DIR=/var/lib/desk-edit/uploads
 EMDASH_SESSIONS_DIR=/var/lib/desk-edit/sessions
+MYJOURNEY_PASSWORD_DB=/var/lib/desk-edit/password-auth.db
 EMDASH_ENCRYPTION_KEY=
-CMS_ADMIN_ENABLED=false
+CMS_ADMIN_ENABLED=true
 STAGING_PREVIEW=false
 AFFILIATE_MODE=editorial_only
 AMAZON_SITE_REGISTERED=false
@@ -56,6 +58,8 @@ CONTACT_EMAIL=nikolasjuan34@gmail.com
 ```
 
 Isi `EMDASH_ENCRYPTION_KEY` dengan key EmDash yang dihasilkan secara privat; gunakan key lama untuk instalasi yang sudah dipakai. Key dibutuhkan saat runtime, bukan untuk build. Contoh generator format EmDash menggunakan Node tersedia pada bagian konfigurasi Docker di bawah; hasilnya disimpan dalam `/etc/desk-edit.env` untuk jalur native.
+
+`MYJOURNEY_PASSWORD_DB` diperlukan oleh versi dengan login email/password dan harus menunjuk SQLite privat di direktori state yang dapat ditulis `deskedit`. Jangan mengarahkannya ke Git, uploads, atau database konten. **6 test ekstensi lulus; check, build, dan deployment/live login versi ini masih menunggu verifikasi.**
 
 Build dari direktori aplikasi dengan origin dan path produksi yang sama. Environment berikut hanya mengandung konfigurasi nonsecret:
 
@@ -84,15 +88,41 @@ sudo journalctl -u desk-edit -n 100 --no-pager
 curl --fail http://127.0.0.1:4321/
 ```
 
-Service systemd sudah berjalan dan halaman publik serta asset tersedia. Konfigurasi produksi saat ini memakai `CMS_ADMIN_ENABLED=true` di balik Basic Auth sementara untuk onboarding pemilik. Admin/setup tetap mendapat HTTP 401 tanpa akses sementara; login pemilik dan upload media belum dinyatakan selesai. Default source tetap false untuk pemasangan baru atau maintenance.
+Service systemd sudah berjalan dan halaman publik serta asset tersedia. Pada 15 Oktober 2026, pemeriksaan database mengonfirmasi **1 user Admin (email Admin yang sudah terdaftar), 1 credential passkey, dan `setup_complete=true`**. Realm Basic Auth sementara telah dilepas. Produksi tetap memakai `CMS_ADMIN_ENABLED=true`; default source false berlaku untuk pemasangan baru atau maintenance. Login password baru, upload media, dan OAuth client belum diverifikasi terpisah. Email kontak tetap `nikolasjuan34@gmail.com`.
 
 ### MCP dan proxy onboarding
 
-MCP bawaan EmDash aktif. `deploy/configure-mcp-proxy.py` menyiapkan pengecualian tepat untuk `/_emdash/api/mcp` serta endpoint protokol OAuth register/token/device, supaya header Bearer tidak tertahan Basic Auth. Admin, API setup/auth, dan halaman consent browser tetap dilindungi realm sementara. Script mencadangkan konfigurasi vhost affiliate, membandingkan diagnostik sebelum/sesudah, melakukan graceful reload, lalu memeriksa penolakan anonim dan path setup terenkode; kegagalan mengembalikan konfigurasi semula. Script ini khusus tahap sebelum passkey pemilik selesai.
+MCP bawaan EmDash aktif. `deploy/configure-mcp-proxy.py` merupakan alat **historis sebelum pemilik pertama terdaftar** untuk mengecualikan endpoint mesin dari Basic Auth. **Jangan jalankan kembali pada instalasi aktif ini** karena tahap onboarding sudah selesai.
 
-Pengujian setelah deployment: `npm run mcp:check -- --require-admin-protection`. Tanpa flag tersebut, script tetap memeriksa metadata dan penolakan token tidak sah sambil melaporkan status admin; cocok sesudah onboarding selesai. Metadata harus menunjuk origin HTTPS publik, bukan `localhost`. Lihat [koneksi AI](AI-CONNECTIONS.md) untuk konfigurasi client dan scope. Jangan mengirim header Basic Auth ke endpoint MCP atau menggabungkannya dengan Bearer.
+Realm sementara dilepas menggunakan `deploy/complete-owner-setup.py`, yang menolak perubahan tanpa setup selesai serta credential milik Admin. Script mencadangkan vhost, membandingkan diagnostik, melakukan reload, dan mengembalikan konfigurasi sebelumnya jika pemeriksaan gagal. Pelepasan ini sudah dilaksanakan; bukan langkah rutin deployment.
 
-Untuk cadangan native yang konsisten, hentikan hanya service `desk-edit`, arsipkan seluruh `/var/lib/desk-edit` (termasuk WAL/SHM bila ada), lalu mulai kembali service. Simpan `/etc/desk-edit.env` dan key sebagai cadangan privat terpisah. Periksa hasil backup dan uji restore ke lokasi percobaan; hindari menyalin file SQLite yang sedang ditulis tanpa mekanisme backup SQLite.
+Status historis sesudah pelepasan, sebelum ekstensi password: halaman login native HTML 200, admin anonim 302 menuju login, API settings privat 401, dan MCP anonim 401 dengan challenge Bearer. POST konfigurasi ulang setup ditolak 409; pembuatan/verifikasi Admin pertama ditolak 400. Tampilan setup dapat tetap 200 tanpa membuka kembali API onboarding.
+
+Pemeriksaan domain publik sebelum ekstensi password memakai **`npm run mcp:check`** menghasilkan **6 lulus, 0 gagal**. `--require-admin-protection` hanya untuk tahap historis Basic Auth, sehingga jangan dipakai pada produksi sesudah onboarding. Metadata harus menunjuk origin HTTPS publik, bukan `localhost`. Lihat [koneksi AI](AI-CONNECTIONS.md) untuk autentikasi client; pemeriksaan anonim ini tidak membuktikan login atau OAuth sudah berhasil.
+
+Untuk cadangan native yang konsisten, gunakan mekanisme backup SQLite atau hentikan hanya service `desk-edit`, arsipkan seluruh `/var/lib/desk-edit`, lalu mulai kembali service. Sertakan **content.db dan password-auth.db beserta WAL/SHM yang diperlukan**, uploads, dan state sesi. Simpan `/etc/desk-edit.env` dan key sebagai cadangan privat terpisah. Periksa hasil backup dan uji restore ke lokasi percobaan; jangan menyalin hanya file utama SQLite saat masih ditulis. Database password tidak boleh dibagikan melalui Git, media library, atau pengaturan konten.
+
+### Pengaturan password pemilik tanpa SMTP
+
+Provider di `src/auth/provider.mjs` mendaftarkan rute login/setup pada Astro. `password-api.ts` membuat ulang session Astro native untuk user yang sama setelah autentikasi; password tidak menjadi kredensial MCP dan tidak menyetujui scope OAuth otomatis. Credential passkey lama tetap disimpan.
+
+Setelah versi baru dan rute HTTPS diverifikasi, operator dapat menjalankan generator sebagai user service. Ganti path output contoh di bawah dengan lokasi privat yang dapat ditulis `deskedit`, di luar checkout dan uploads. Ini membuat berkas enrollment sensitif, bukan password bawaan:
+
+```bash
+sudo -u deskedit env \
+  EMDASH_DATABASE_URL=file:/var/lib/desk-edit/content.db \
+  EMDASH_SITE_URL=https://affiliate.restupambudi.my.id \
+  MYJOURNEY_PASSWORD_DB=/var/lib/desk-edit/password-auth.db \
+  /opt/desk-edit/runtime/node/bin/node \
+  /opt/desk-edit/app/scripts/password-owner-setup.ts \
+  --output=/jalur-privat/myjourney-password.html
+```
+
+Script mensyaratkan tepat satu Admin aktif, mengikat token ke akun tersebut, menyimpan hash token, dan tidak mencetak token/password. Pemilik membuka HTML privat, lalu mengatur password untuk email Admin yang sudah terdaftar sendiri. Tautan fragment `#token=...` berlaku satu jam dan sekali pakai. Jangan mengunggah atau membagikan berkas/tautannya; hapus HTML setelah dipakai.
+
+Jika password sudah ada, script menolak enrollment biasa. Tambahkan `--reset` hanya untuk mengganti password yang sudah tersimpan. Reset ini **tidak mencabut session lama ataupun token OAuth**; tangani pencabutan akses secara terpisah bila diperlukan. Pemulihan ini memakai operator VPS, tanpa SMTP dan tanpa email reset otomatis.
+
+Hash memakai scrypt bersalt (`N=65536`, `r=8`, `p=2`, kebutuhan dasar 64 MiB), maksimal dua KDF bersamaan. Pembatas persisten menerapkan 40 percobaan/menit global dan 8/15 menit per email/jenis operasi; pemeriksaan Origin tetap ketat. `password-auth.db` adalah state privat, bukan data content/settings EmDash.
 
 ## Opsi Docker — belum diuji
 
@@ -164,11 +194,11 @@ Jalur native sudah dihubungkan melalui OpenLiteSpeed dan Cloudflare DNS, dengan 
 
 Proxy meneruskan ke port loopback aplikasi dengan hostname HTTPS final dan informasi protokol dari proxy yang dipercaya. Pertahankan pengecualian cache bersama untuk admin dan API autentikasi. Situs Node tidak melewati `src/worker.ts`; redirect HTTP ke HTTPS ditangani pada proxy dan telah diperiksa mempertahankan path/query.
 
-Wizard pertama EmDash tidak boleh tersedia bagi pengunjung umum sebelum pemilik menyelesaikan pendaftaran passkey. `CMS_ADMIN_ENABLED=false` menahan admin, API setup, dan URL media CMS dengan HTTP 503 serta `private, no-store`; halaman publik dan asset tema tetap tersedia. Flag ini berlaku pada middleware Node hasil build produksi dan Worker Cloudflare, bukan pada server development lokal.
+Onboarding produksi sudah selesai. Versi baru mengarahkan [login EmDash](https://affiliate.restupambudi.my.id/_emdash/admin/login) ke `/_emdash/admin/login/password` untuk email/password; verifikasi live masih tertunda. Gunakan akun pemilik yang sudah ada setelah enrollment password selesai. Metode passkey tetap tersedia melalui `/_emdash/admin/login?method=passkey`. Username/password Basic Auth lama tidak diperlukan; jangan mengulang wizard atau mereset database CMS untuk login.
 
-Ketika pemilik siap, batasi akses onboarding di proxy atau jaringan, lalu ubah `CMS_ADMIN_ENABLED=true` dalam `/etc/desk-edit.env` (native) atau `.env` (Compose). Terapkan dengan `sudo systemctl restart desk-edit` atau `docker compose up -d app`; perubahan flag runtime ini tidak memerlukan rebuild. Gunakan origin HTTPS final untuk membuat passkey karena passkey terikat domain. Tunnel SSH ke localhost dapat dipakai untuk pemeriksaan layout/HTTP privat, tetapi jangan mendaftarkan passkey produksi pada origin localhost.
+Untuk instalasi baru atau maintenance, `CMS_ADMIN_ENABLED=false` menahan admin, API setup, dan URL media CMS dengan HTTP 503 serta `private, no-store`; halaman publik dan asset tema tetap tersedia. Flag ini berlaku pada middleware Node hasil build produksi dan Worker Cloudflare, bukan pada server development lokal. Instalasi baru harus melindungi wizard sampai pemilik siap. Mengubah flag runtime dan me-restart service tidak memerlukan rebuild.
 
-Sesudah pemilik selesai setup, **pertahankan `CMS_ADMIN_ENABLED=true`** agar login, penyuntingan, API, dan gambar CMS publik tetap bekerja. Mengembalikan flag ke false juga memblokir media artikel; gunakan hanya untuk hold maintenance yang disengaja. Pastikan login ulang dan URL media berfungsi. Lihat [petunjuk CMS](CMS.md) untuk workflow editorial, draft, sample content, dan kunci enkripsi. Adapter media KV Cloudflare tidak digunakan pada jalur native atau Docker Node ini.
+**Pertahankan `CMS_ADMIN_ENABLED=true`** agar login, penyuntingan, API, dan gambar CMS publik tetap bekerja. Mengembalikan flag ke false juga memblokir media artikel; gunakan hanya untuk hold maintenance yang disengaja. Login password dan pembacaan berizin melalui client masih perlu diperiksa. Scope OAuth yang ditolak belum disetujui; session password tidak mengubah keputusan consent. Lihat [petunjuk CMS](CMS.md) untuk workflow editorial, draft, sample content, dan kunci enkripsi.
 
 ## Pembaruan dan cadangan
 

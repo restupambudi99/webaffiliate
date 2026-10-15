@@ -1,6 +1,7 @@
 import { defineMiddleware } from 'astro:middleware';
 import { cmsBootstrapResponse } from './lib/cms-bootstrap';
 import { mcpCanonicalResponse } from './lib/mcp-access';
+import { passwordLoginRedirect } from './auth/password-policy';
 
 export const onRequest = defineMiddleware((context, next) => {
   const canonicalMcp = mcpCanonicalResponse(context.request);
@@ -13,5 +14,7 @@ export const onRequest = defineMiddleware((context, next) => {
     });
     if (hold) return hold;
   }
+  const passwordLogin = passwordLoginRedirect(context.request);
+  if (passwordLogin) return passwordLogin;
   return next();
 });

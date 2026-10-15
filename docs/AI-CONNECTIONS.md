@@ -1,6 +1,6 @@
 # Menghubungkan AI ke MyJourney
 
-Kit ini menyiapkan konfigurasi **Codex**, **Claude Code**, dan petunjuk **ChatGPT web**. File konfigurasi tidak memindahkan login antarproduk. Saat kit disiapkan, passkey pemilik belum dibuat; belum ada klaim bahwa client telah terautentikasi atau siap menulis.
+Kit ini menyiapkan konfigurasi **Codex**, **Claude Code**, dan petunjuk **ChatGPT web**. File konfigurasi tidak memindahkan login antarproduk. Akun Admin yang sudah ada adalah email Admin yang sudah terdaftar; email kontak publik tetap `nikolasjuan34@gmail.com`. Onboarding dan credential passkey tetap dipertahankan. Ekstensi login email/password lulus 6 test, type check 61 file, build Node, dan integrasi HTTP pada database sementara. Deployment serta login password pemilik masih menunggu verifikasi. Konfigurasi ini belum membuktikan client terautentikasi atau siap menulis.
 
 | Server | URL | Fungsi |
 | --- | --- | --- |
@@ -9,11 +9,11 @@ Kit ini menyiapkan konfigurasi **Codex**, **Claude Code**, dan petunjuk **ChatGP
 
 Native MCP situs menggunakan Streamable HTTP. Token OAuth atau PAT diperlukan; cookie login admin saja tidak cukup. Docs MCP hanya membaca dokumentasi dan tidak dapat mengubah situs. [Referensi MCP EmDash](https://docs.emdashcms.com/reference/mcp-server/), [Docs MCP](https://docs.emdashcms.com/docs-mcp/).
 
-## Selesaikan identitas pemilik
+## Login pemilik dan autentikasi client
 
-Pemilik menyelesaikan wizard dan mendaftarkan passkey pada domain HTTPS final. Halaman admin/authorize dilindungi Basic Auth sementara selama onboarding; kredensialnya tetap privat. Jalur mesin MCP dan discovery harus dikecualikan dari Basic Auth agar memakai autentikasi native EmDash. Ini tidak membuat endpoint MCP anonim.
+Jalur default baru adalah [login EmDash](https://affiliate.restupambudi.my.id/_emdash/admin/login), yang diarahkan ke `/_emdash/admin/login/password`. Pemilik masuk dengan email Admin yang sudah terdaftar setelah membuat password sendiri melalui tautan privat sekali pakai. Tidak perlu SMTP atau perangkat USB passkey. Metode lama tetap tersedia di `/_emdash/admin/login?method=passkey`; credential-nya tidak dihapus. Perilaku baru ini masih menunggu verifikasi live.
 
-Setelah perubahan server diterapkan, client membuka browser untuk login dan persetujuan OAuth. Gunakan akun pemilik sendiri. Jangan menaruh password Basic Auth, cookie, token, atau passkey dalam file MCP maupun Git. Prosedur admin dan status penahanan dijelaskan di [CMS](CMS.md). Jangan mengklaim koneksi selesai sebelum panggilan baca berhasil.
+Client membuka browser untuk session native EmDash dan persetujuan OAuth. Password tidak menggantikan consent: scope yang ditolak tetap belum disetujui. MCP masih memerlukan Bearer yang sah. Basic Auth sementara sudah dilepas; jangan mengulang wizard atau script proxy onboarding historis. Jangan menaruh password, tautan enrollment, cookie, token, atau passkey dalam file MCP/Git. Pengaturan password dijelaskan di [CMS](CMS.md); koneksi baru selesai setelah panggilan baca berizin berhasil.
 
 ## Codex
 
@@ -103,4 +103,6 @@ Contoh prompt:
 
 ## Memeriksa koneksi
 
-Minta daftar collection atau draft sebagai pemeriksaan baca pertama. `401` dengan metadata OAuth menandakan autentikasi diperlukan; browser biasa yang mengakses MCP dengan GET dapat menerima `405` karena endpoint memakai POST. Respons HTML Basic Auth/challenge pada panggilan mesin menandakan pengecualian proxy belum benar. Periksa hasil aktual dan sampaikan hambatan, tanpa menyalin kredensial ke log atau melonggarkan gate editorial.
+Sebelum ekstensi password, `npm run mcp:check` pada domain publik menghasilkan **6 lulus, 0 gagal** sesudah onboarding; admin anonim 302 dan tampilan setup 200. Ini bukti historis discovery/penolakan akses, bukan verifikasi login password, OAuth, atau pembacaan berizin. Jangan memakai `--require-admin-protection` pada produksi yang onboarding-nya sudah selesai; flag tersebut menguji Basic Auth tahap sebelumnya.
+
+Minta daftar collection atau draft sebagai pemeriksaan baca berizin pertama. `401` dengan metadata OAuth menandakan autentikasi diperlukan; browser biasa yang mengakses MCP dengan GET dapat menerima `405` karena endpoint memakai POST. Jika challenge Basic Auth lama masih muncul, laporkan sebagai masalah proxy. Periksa hasil aktual tanpa menyalin kredensial ke log atau melonggarkan gate editorial.
