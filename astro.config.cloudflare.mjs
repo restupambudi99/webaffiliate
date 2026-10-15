@@ -22,7 +22,7 @@ export default defineConfig({
       database: d1({ binding: 'DB' }),
       storage: r2({ binding: 'MEDIA' }),
       siteUrl: site || undefined,
-      mcp: false,
+      mcp: true,
       plugins: [{
         id: 'desk-edit-editorial-gate',
         version: '1.0.0',

@@ -4,7 +4,7 @@ import { cmsBootstrapResponse } from '../src/lib/cms-bootstrap.ts';
 
 test('Cloudflare CMS bootstrap defaults closed for admin, setup APIs, and media', async () => {
   for (const env of [undefined, null, {}, { CMS_ADMIN_ENABLED: 'false' }, { CMS_ADMIN_ENABLED: true }]) {
-    for (const path of ['/_emdash', '/_emdash/', '/_emdash/admin/setup', '/_emdash/api/setup/admin/verify', '/_emdash/api/media/file/image', '/%5Femdash/api/setup', '/_emdash%2Fapi/setup']) {
+    for (const path of ['/_emdash', '/_emdash/', '/_emdash/admin/setup', '/_emdash/api/setup/admin/verify', '/_emdash/api/media/file/image', '/_emdash/api/mcp', '/_emdash/api/oauth/register', '/_emdash/api/oauth/token', '/_emdash/oauth/authorize', '/%5Femdash/api/setup', '/_emdash%2Fapi/setup']) {
       const response = cmsBootstrapResponse(new Request(`https://affiliate.restupambudi.my.id${path}`, { method: 'POST' }), env);
       assert.equal(response?.status, 503, `${path} should be held`);
       assert.equal(response.headers.get('cache-control'), 'private, no-store');

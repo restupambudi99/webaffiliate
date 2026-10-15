@@ -2,6 +2,8 @@
 
 Website ini memakai EmDash CMS 1.2.0 asli di dalam Astro 6.4.8. Halaman publik dirender di server dan membaca revisi yang telah diterbitkan. Panel admin ada di `/_emdash/admin/`; menyimpan draft tidak mengubah artikel publik.
 
+MCP bawaan aktif pada `https://affiliate.restupambudi.my.id/_emdash/api/mcp`, dengan OAuth atau personal access token yang memiliki scope sesuai tugas. Ikuti [panduan koneksi AI](AI-CONNECTIONS.md) untuk Codex, ChatGPT, dan Claude Code. Konfigurasi client tidak berisi kredensial; login pemilik dan persetujuan scope diselesaikan pada masing-masing client.
+
 ## Menjalankan lokal
 
 Gunakan Node.js 24 (mesin ini memakai 24.16.0) dan npm:

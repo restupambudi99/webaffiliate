@@ -18,6 +18,7 @@
     "seed:validate": "emdash seed seed/seed.json --validate",
     "cms:key": "emdash secrets generate --write .env",
     "cms:doctor": "emdash doctor",
+    "mcp:check": "node scripts/check-mcp.mjs",
     "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy"
   },
   "dependencies": {

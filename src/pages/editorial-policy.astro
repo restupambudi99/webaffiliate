@@ -1,8 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { settings } from '../lib/settings';
+import { getSitePresentation } from '../lib/site-presentation';
+const site = await getSitePresentation();
 ---
-<Layout title="Editorial policy" description="MyJourney’s approach to evidence, publication review, corrections, illustrations, and commercial relationships.">
+<Layout title="Editorial policy" description={`${site.brand}’s approach to evidence, publication review, corrections, illustrations, and commercial relationships.`}>
   <div class="container policy-page">
     <header class="page-heading">
       <p class="eyebrow">Our approach</p>
@@ -11,7 +12,7 @@ import { settings } from '../lib/settings';
     </header>
     <div class="prose">
       <h2>Answer a real question</h2>
-      <p>{settings.brand} develops guides around a specific reader decision. A draft should explain needs, fit, tradeoffs, and practical next steps. It should remain useful without shopping links. Product descriptions alone do not provide enough editorial value.</p>
+      <p>{site.brand} develops guides around a specific reader decision. A draft should explain needs, fit, tradeoffs, and practical next steps. It should remain useful without shopping links. Product descriptions alone do not provide enough editorial value.</p>
       <h2>Label the method</h2>
       <p>The initial articles are labeled “Editorial guide” and remain drafts. They offer original planning frameworks and cite official documentation where it supports a technical point. They do not claim hands-on testing, product ratings, or named expert credentials.</p>
       <p>A future researched product analysis must record its sources and explain its limits. A future hands-on review must have real testing records, a stated method, and a clear account of what was observed. Those labels cannot be added merely because a product was discussed.</p>

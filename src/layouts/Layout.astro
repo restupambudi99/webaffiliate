@@ -2,8 +2,15 @@
 import '../styles/global.css';
 import Icon from '../components/Icon.astro';
 import { settings } from '../lib/settings';
+import { getSitePresentation } from '../lib/site-presentation';
 interface Props { title?: string; description?: string; noindex?: boolean }
-const { title, description=settings.description, noindex=false } = Astro.props;
+const site = await getSitePresentation();
+const { title, description=site.description, noindex=false } = Astro.props;
+const fullTitle = title ? `${title}${site.titleSeparator}${site.brand}` : `${site.brand}${site.tagline ? `${site.titleSeparator}${site.tagline}` : ''}`;
+const faviconHref = site.favicon?.url || '/favicon.svg?v=myjourney';
+const faviconType = site.favicon ? site.favicon.contentType : 'image/svg+xml';
+const socialImage = site.defaultOgImage ? new URL(site.defaultOgImage.url, settings.siteUrl).href : undefined;
+if (site.cacheHint && Astro.cache?.enabled) Astro.cache.set(site.cacheHint);
 const canonical = settings.siteUrl ? new URL(Astro.url.pathname, settings.siteUrl).href : undefined;
 const active = Astro.url.pathname;
 ---
@@ -13,21 +20,23 @@ const active = Astro.url.pathname;
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta name="theme-color" content="#f8f7f2"/>
-    <title>{title ? `${title} — ${settings.brand}` : `${settings.brand} — Make room for better work`}</title>
+    <title>{fullTitle}</title>
     <meta name="description" content={description}/>
     {canonical && <link rel="canonical" href={canonical}/>}
     {(noindex || settings.preview) && <meta name="robots" content="noindex, nofollow"/>}
-    <meta property="og:title" content={title || `${settings.brand} — Make room for better work`}/>
+    <meta property="og:title" content={fullTitle}/>
+    <meta property="og:site_name" content={site.brand}/>
     <meta property="og:description" content={description}/>
     <meta property="og:type" content="website"/>
-    <link rel="icon" href="/favicon.svg?v=myjourney" type="image/svg+xml"/>
+    {socialImage && <><meta property="og:image" content={socialImage}/><meta property="og:image:alt" content={site.defaultOgImage?.alt}/></>}
+    <link rel="icon" href={faviconHref} type={faviconType}/>
     <slot name="head"/>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="container header-inner">
-        <a class="logo" href="/" aria-label={`${settings.brand} home`}>{settings.brand}<span class="logo-dot">.</span></a>
+        <a class="logo" href="/" aria-label={`${site.brand} home`}>{site.logo ? <img class="brand-image" src={site.logo.url} alt={site.logo.alt} width={site.logo.width || 200} height={site.logo.height || 40}/> : <>{site.brand}<span class="logo-dot">.</span></>}</a>
         <nav class="desktop-nav" aria-label="Main navigation">
           <a href="/guides/" aria-current={active==='/guides/' ? 'page' : undefined}>The guides</a>
           <a href="/comparisons/" aria-current={active==='/comparisons/' ? 'page' : undefined}>Comparisons</a>
@@ -39,17 +48,17 @@ const active = Astro.url.pathname;
           <button class="icon-button menu-toggle" aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav"><Icon name="menu"/></button>
         </div>
       </div>
-      <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile navigation" hidden><a href="/guides/">The guides</a><a href="/comparisons/">Comparisons</a><a href="/reviews/">Reviews</a><a href="/editorial-policy/">Our approach</a><a href="/about/">About MyJourney</a></nav>
+      <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile navigation" hidden><a href="/guides/">The guides</a><a href="/comparisons/">Comparisons</a><a href="/reviews/">Reviews</a><a href="/editorial-policy/">Our approach</a><a href="/about/">About {site.brand}</a></nav>
     </header>
     <main id="main"><slot/></main>
     <footer class="site-footer">
       <div class="container footer-grid">
-        <div class="footer-brand"><a class="logo" href="/">{settings.brand}<span class="logo-dot">.</span></a><p>A considered workspace.<br/>A better everyday.</p><span class="footer-note">Independent editorial for the home office.</span></div>
+        <div class="footer-brand"><a class="logo" href="/" aria-label={`${site.brand} home`}>{site.logo ? <img class="brand-image" src={site.logo.url} alt={site.logo.alt} width={site.logo.width || 200} height={site.logo.height || 40} loading="lazy"/> : <>{site.brand}<span class="logo-dot">.</span></>}</a>{site.tagline && <p>{site.tagline}</p>}<span class="footer-note">Independent editorial for the home office.</span></div>
         <div><h2>Explore</h2><a href="/guides/">All guides</a><a href="/comparisons/">Comparisons</a><a href="/reviews/">Product reviews</a><a href="/search/">Search</a></div>
-        <div><h2>{settings.brand}</h2><a href="/about/">About us</a><a href="/editorial-policy/">Editorial policy</a><a href="/contact/">Contact & corrections</a></div>
+        <div><h2>{site.brand}</h2><a href="/about/">About us</a><a href="/editorial-policy/">Editorial policy</a><a href="/contact/">Contact & corrections</a></div>
         <div><h2>The details</h2><a href="/privacy/">Privacy policy</a><a href="/affiliate-disclosure/">Affiliate disclosure</a>{settings.preview && <span class="preview-label">Editorial draft preview</span>}</div>
       </div>
-      <div class="container footer-bottom"><p>© {new Date().getFullYear()} {settings.brand}</p><p>{settings.affiliateMode==='affiliate' && settings.associateTag && settings.siteRegistered ? settings.disclosure : 'Editorial guides. No active affiliate links.'}</p><span>Made for a little more focus.</span></div>
+      <div class="container footer-bottom"><p>© {new Date().getFullYear()} {site.brand}</p><p>{settings.affiliateMode==='affiliate' && settings.associateTag && settings.siteRegistered ? settings.disclosure : 'Editorial guides. No active affiliate links.'}</p><span>Made for a little more focus.</span></div>
     </footer>
     <script>
       const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
@@ -59,3 +68,11 @@ const active = Astro.url.pathname;
     </script>
   </body>
 </html>
+<style>
+  .site-header .logo { min-width: 0; max-width: min(240px, calc(100vw - 160px)); overflow: hidden; text-overflow: ellipsis; }
+  .header-actions { flex-shrink: 0; }
+  .brand-image { width: 200px; height: 40px; max-width: 100%; object-fit: contain; object-position: left center; }
+  .footer-brand { min-width: 0; }
+  .footer-brand .logo { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+  @media (max-width: 767px) { .brand-image { width: 160px; height: 36px; } }
+</style>

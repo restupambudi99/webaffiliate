@@ -1,14 +1,16 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { getSitePresentation } from '../../lib/site-presentation';
 import GuideCard from '../../components/GuideCard.astro';
 import { getGuides } from '../../lib/content';
 import { categories, type GuideCategory } from '../../data/guides';
 const category=Astro.url.searchParams.get('category');
 const selected=category && Object.keys(categories).includes(category) ? category as GuideCategory : undefined;
 const guides=await getGuides(selected);
+const site = await getSitePresentation();
 ---
 <Layout title="The guides" description="Practical guides to desks, lighting, and useful home office accessories. Start with what you need, and understand the tradeoffs.">
-  <div class="container"><header class="page-heading"><p class="eyebrow">THE MYJOURNEY LIBRARY</p><h1>A little clarity.<br/>A better workspace.</h1><p>Considered guides for the big decisions and the small details. Find what works for your space, your habits, and your everyday.</p></header>
+  <div class="container"><header class="page-heading"><p class="eyebrow">THE {site.brand} LIBRARY</p><h1>A little clarity.<br/>A better workspace.</h1><p>Considered guides for the big decisions and the small details. Find what works for your space, your habits, and your everyday.</p></header>
   <section class="listing" aria-label="Workspace guides"><nav class="filters" aria-label="Filter guides by category"><a class="filter" href="/guides/" aria-current={!selected?'page':undefined} data-active={!selected}>All guides</a>{Object.entries(categories).map(([key,value])=><a class="filter" href={`/guides/?category=${key}`} aria-current={selected===key?'page':undefined} data-active={selected===key}>{value.title}</a>)}</nav>
   {guides.length ? <div class="guide-grid">{guides.map((guide,index)=><GuideCard guide={guide} index={index}/>)}</div> : <div class="empty-state"><h2>Good advice takes a little care.</h2><p>Guides in this category are being prepared for editorial review. Explore our approach while we put the details together.</p><a class="text-link" href="/editorial-policy/">Our editorial policy →</a></div>}
   </section></div>

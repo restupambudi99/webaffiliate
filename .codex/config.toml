@@ -1,0 +1,6 @@
+# Project-scoped MCP configuration. Authenticate interactively; never add secrets.
+[mcp_servers.myjourney]
+url = "https://affiliate.restupambudi.my.id/_emdash/api/mcp"
+
+[mcp_servers.emdash-docs]
+url = "https://docs.emdashcms.com/mcp"

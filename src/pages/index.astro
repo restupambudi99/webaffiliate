@@ -1,15 +1,17 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getSitePresentation } from '../lib/site-presentation';
 import Icon from '../components/Icon.astro';
 import GuideCard from '../components/GuideCard.astro';
 import { getGuides } from '../lib/content';
 const guides=await getGuides();
 const features=guides.slice(0,3);
+const site = await getSitePresentation();
 const starterHref=guides.some(guide=>guide.slug==='small-space-desk-setup') ? '/articles/small-space-desk-setup/' : '/guides/';
 ---
 <Layout>
   <section class="hero container">
-    <div class="hero-copy"><p class="eyebrow"><span class="tiny-line"></span> THE THOUGHTFUL WORKSPACE JOURNAL</p><h1>Less clutter.<br/>More <em>focus.</em></h1><p class="hero-description">A good workspace starts with thoughtful choices. Discover practical guides to a desk that works better for you.</p><div class="hero-actions"><a class="button" href="/guides/">Explore the guides <Icon/></a><a class="quiet-link" href="/about/">Get to know MyJourney <span>↗</span></a></div><div class="hero-footnote"><span class="small-circle"><Icon name="check" size={15}/></span><span>Useful advice. Clear tradeoffs. Your choice.</span></div></div>
+    <div class="hero-copy"><p class="eyebrow"><span class="tiny-line"></span> THE THOUGHTFUL WORKSPACE JOURNAL</p><h1>Less clutter.<br/>More <em>focus.</em></h1><p class="hero-description">A good workspace starts with thoughtful choices. Discover practical guides to a desk that works better for you.</p><div class="hero-actions"><a class="button" href="/guides/">Explore the guides <Icon/></a><a class="quiet-link" href="/about/">Get to know {site.brand} <span>↗</span></a></div><div class="hero-footnote"><span class="small-circle"><Icon name="check" size={15}/></span><span>Useful advice. Clear tradeoffs. Your choice.</span></div></div>
     <div class="hero-visual"><img class="hero-photo" src="/images/workspace-hero.webp" width="1672" height="941" alt="An illustrative sunlit home workspace with a wood desk, laptop stand, task lamp, and sage desk mat" fetchpriority="high"/><span class="photo-label">A SPACE TO THINK</span><div class="hero-feature"><div><p class="eyebrow">START WITH THE ESSENTIALS</p><h2>Small space. Big possibilities.</h2></div><a href={starterHref} class="round-link" aria-label={starterHref==='/guides/'?'Explore workspace guides':'Read the small-space desk guide'}><Icon/></a></div></div>
   </section>
   <section class="category-strip"><div class="container category-grid"><a href="/guides/?category=workspace"><div class="category-icon"><Icon name="desk" size={29}/></div><div><h2>Your workspace</h2><p>Make every inch work.</p></div><Icon/></a><a href="/guides/?category=lighting"><div class="category-icon"><Icon name="lamp" size={29}/></div><div><h2>Better lighting</h2><p>Set the right atmosphere.</p></div><Icon/></a><a href="/guides/?category=accessories"><div class="category-icon"><Icon name="keyboard" size={29}/></div><div><h2>The useful details</h2><p>Small changes, everyday value.</p></div><Icon/></a></div></section>

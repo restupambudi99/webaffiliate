@@ -84,7 +84,13 @@ sudo journalctl -u desk-edit -n 100 --no-pager
 curl --fail http://127.0.0.1:4321/
 ```
 
-Service systemd sudah berjalan dan halaman publik serta asset tersedia. `CMS_ADMIN_ENABLED=false` masih aktif, sehingga `/_emdash/admin/` ditahan dengan HTTP 503 sambil menunggu pemilik mendaftarkan passkey. Login pemilik dan upload media belum dinyatakan selesai; keduanya diperiksa setelah onboarding pemilik.
+Service systemd sudah berjalan dan halaman publik serta asset tersedia. Konfigurasi produksi saat ini memakai `CMS_ADMIN_ENABLED=true` di balik Basic Auth sementara untuk onboarding pemilik. Admin/setup tetap mendapat HTTP 401 tanpa akses sementara; login pemilik dan upload media belum dinyatakan selesai. Default source tetap false untuk pemasangan baru atau maintenance.
+
+### MCP dan proxy onboarding
+
+MCP bawaan EmDash aktif. `deploy/configure-mcp-proxy.py` menyiapkan pengecualian tepat untuk `/_emdash/api/mcp` serta endpoint protokol OAuth register/token/device, supaya header Bearer tidak tertahan Basic Auth. Admin, API setup/auth, dan halaman consent browser tetap dilindungi realm sementara. Script mencadangkan konfigurasi vhost affiliate, membandingkan diagnostik sebelum/sesudah, melakukan graceful reload, lalu memeriksa penolakan anonim dan path setup terenkode; kegagalan mengembalikan konfigurasi semula. Script ini khusus tahap sebelum passkey pemilik selesai.
+
+Pengujian setelah deployment: `npm run mcp:check -- --require-admin-protection`. Tanpa flag tersebut, script tetap memeriksa metadata dan penolakan token tidak sah sambil melaporkan status admin; cocok sesudah onboarding selesai. Metadata harus menunjuk origin HTTPS publik, bukan `localhost`. Lihat [koneksi AI](AI-CONNECTIONS.md) untuk konfigurasi client dan scope. Jangan mengirim header Basic Auth ke endpoint MCP atau menggabungkannya dengan Bearer.
 
 Untuk cadangan native yang konsisten, hentikan hanya service `desk-edit`, arsipkan seluruh `/var/lib/desk-edit` (termasuk WAL/SHM bila ada), lalu mulai kembali service. Simpan `/etc/desk-edit.env` dan key sebagai cadangan privat terpisah. Periksa hasil backup dan uji restore ke lokasi percobaan; hindari menyalin file SQLite yang sedang ditulis tanpa mekanisme backup SQLite.
 

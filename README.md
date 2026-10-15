@@ -35,9 +35,15 @@ The server runs the Astro Node application with persistent SQLite content and a 
 
 The `desk-edit` systemd service runs as `deskedit`, from `/opt/desk-edit/app`, using `/opt/desk-edit/runtime/node/bin/node`. It listens on `127.0.0.1:4321` behind the VPS HTTPS reverse proxy. Persistent state is stored at `/var/lib/desk-edit`: `content.db`, `uploads/`, and `sessions/`. Set `EMDASH_SESSIONS_DIR` explicitly alongside the database and upload paths. CMS uploads are limited to **5 MiB per file**. Build and runtime must use the same paths and HTTPS origin. Back up the database, uploaded files, and private environment configuration together; see [VPS operations](docs/VPS.md).
 
-The initial owner passkey is still pending. After the owner confirmed readiness, production was enabled behind a temporary OpenLiteSpeed authentication realm on `/_emdash/`: anonymous requests receive 401 and protected owner setup receives 200. Temporary access details are stored privately outside Git. Remove that realm only after the owner registers a passkey and verifies login, then **leave `CMS_ADMIN_ENABLED=true`** for normal authentication, editing, and public CMS media. The source default remains false for safe first deployments and deliberate maintenance; false also interrupts uploaded media. Local development is unaffected. No EmDash owner credentials are fabricated.
+The initial owner passkey is still pending. Production is enabled behind a temporary OpenLiteSpeed authentication realm: admin, setup, and browser consent remain protected; exact MCP and OAuth protocol endpoints use native Bearer/PKCE authentication. Anonymous setup requests receive 401. Temporary access details are stored privately outside Git. Remove the temporary realm only after the owner registers a passkey and verifies login, then **leave `CMS_ADMIN_ENABLED=true`** for normal authentication, editing, and public CMS media. The source default remains false for safe first deployments and deliberate maintenance; false also interrupts uploaded media. Local development is unaffected. No EmDash owner credentials are fabricated.
 
 Use the generated `EMDASH_ENCRYPTION_KEY` from the private environment configuration, keep a backup, and never commit it. See the [CMS and owner setup instructions](docs/CMS.md). The separate private online design preview is a static preview and does not host the CMS admin.
+
+## Connect an AI assistant
+
+The native EmDash MCP server is enabled at `https://affiliate.restupambudi.my.id/_emdash/api/mcp`. It requires the owner's OAuth login or a scoped personal access token; it never grants anonymous editing. Complete the real owner passkey setup before connecting a client.
+
+The repository includes `.mcp.json` for Claude Code, `.codex/config.toml` for a trusted Codex project, and instructions for ChatGPT web. These configure the site MCP and the public EmDash documentation MCP without storing credentials. See the [AI connection guide](docs/AI-CONNECTIONS.md) for client setup, scopes, example prompts, and the difference between CMS changes and source/theme changes. Check discovery and anonymous access protection with `npm run mcp:check`.
 
 ## Optional Cloudflare Workers scaffold
 

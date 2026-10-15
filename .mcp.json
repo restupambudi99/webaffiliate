@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "myjourney": {
+      "type": "http",
+      "url": "https://affiliate.restupambudi.my.id/_emdash/api/mcp"
+    },
+    "emdash-docs": {
+      "type": "http",
+      "url": "https://docs.emdashcms.com/mcp"
+    }
+  }
+}

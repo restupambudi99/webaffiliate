@@ -24,7 +24,8 @@ export default defineConfig({
       storage: local({ directory: process.env.EMDASH_UPLOADS_DIR || './uploads', baseUrl: '/_emdash/api/media/file' }),
       maxUploadSize: 5 * 1024 * 1024,
       siteUrl: site || undefined,
-      mcp: false,
+      // OAuth/PAT authentication and per-user scopes are enforced by EmDash.
+      mcp: true,
       plugins: [{
         id: 'desk-edit-editorial-gate',
         version: '1.0.0',

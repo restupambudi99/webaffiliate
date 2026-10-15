@@ -1,9 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { settings } from '../lib/settings';
+import { getSitePresentation } from '../lib/site-presentation';
+const site = await getSitePresentation();
 const affiliateActive = settings.affiliateMode === 'affiliate' && Boolean(settings.associateTag) && settings.siteRegistered;
 ---
-<Layout title="Affiliate disclosure" description="How MyJourney handles paid links and the current status of affiliate monetization.">
+<Layout title="Affiliate disclosure" description={`How ${site.brand} handles paid links and the current status of affiliate monetization.`}>
   <div class="container policy-page">
     <header class="page-heading">
       <p class="eyebrow">Affiliate disclosure</p>
@@ -25,7 +27,7 @@ const affiliateActive = settings.affiliateMode === 'affiliate' && Boolean(settin
       )}
       <h2>How paid links are presented</h2>
       <p>When enabled, paid links must identify their destination and be labeled near the recommendation. Articles also explain the commission relationship before the first paid link. An affiliate link does not open automatically when a page loads or while you read.</p>
-      <p>Shopping and checkout happen on the seller’s website. Price, availability, delivery, and return information should be checked there. MyJourney does not process orders or payments.</p>
+      <p>Shopping and checkout happen on the seller’s website. Price, availability, delivery, and return information should be checked there. {site.brand} does not process orders or payments.</p>
       <h2>Evidence comes first</h2>
       <p>A commission relationship does not establish that a product has been tested or is right for a particular reader. Guides must explain their evidence and limitations. The current drafts are editorial frameworks, with no tested product rankings, live prices, or copied customer ratings.</p>
       <p>Any future sponsored content or other commercial relationship must be disclosed in its own context. Read our <a class="text-link" href="/editorial-policy/">editorial policy</a> for the publication process.</p>

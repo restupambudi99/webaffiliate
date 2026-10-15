@@ -12,7 +12,9 @@ const results=[];
 for(const width of [360,768,1440]){
   await page.setViewportSize({width,height:1000});
   await page.goto(base+'/',{waitUntil:'networkidle'});
-  assert.equal(await page.title(),'MyJourney — Make room for better work');
+  const brand=(await page.locator('header .logo').getAttribute('aria-label')).replace(/ home$/, '');
+  assert.ok((await page.title()).startsWith(brand));
+  assert.ok((await page.title()).includes(await page.locator('.footer-brand > p').innerText()));
   assert.equal(await page.locator('meta[name=robots]').getAttribute('content'),'noindex, nofollow');
   assert.equal(await page.locator('.hero-photo').evaluate(img=>img.complete&&img.naturalWidth>0),true);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`Home overflows at ${width}`);

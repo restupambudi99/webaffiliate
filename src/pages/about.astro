@@ -1,23 +1,24 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { settings } from '../lib/settings';
+import { getSitePresentation } from '../lib/site-presentation';
+const site = await getSitePresentation();
 ---
-<Layout title="About MyJourney" description="Why MyJourney exists: useful, independent buying frameworks for a more considered home workspace.">
+<Layout title={`About ${site.brand}`} description={`Why ${site.brand} exists: useful, independent buying frameworks for a more considered home workspace.`}>
   <div class="container policy-page">
     <header class="page-heading">
-      <p class="eyebrow">About {settings.brand}</p>
+      <p class="eyebrow">About {site.brand}</p>
       <h1>A little more thought.<br/>A more useful desk.</h1>
       <p>Practical guides for the space where everyday work happens.</p>
     </header>
     <div class="prose">
       <h2>Start with what you need</h2>
-      <p>{settings.brand} is an independent home-workspace publication in development. Its purpose is to help adult readers understand a choice before buying: what to measure, which specifications matter, and what compromises an accessory introduces.</p>
+      <p>{site.brand} is an independent home-workspace publication in development. Its purpose is to help adult readers understand a choice before buying: what to measure, which specifications matter, and what compromises an accessory introduces.</p>
       <p>We focus on small workspaces, lighting, and everyday desk accessories. A guide should still be useful when every shopping link is removed. Sometimes the most useful outcome is rearranging what you already own.</p>
       <h2>Clear about the evidence</h2>
       <p>The initial guides are original editorial frameworks. They are not hands-on product tests or rankings. Where a technical point relies on outside information, the guide links to the relevant official source. A source does not replace checking the instructions for your exact equipment.</p>
       <p>The workspace imagery is original AI-generated illustration. It shows a visual idea, not a tested product or a photograph of a reviewed setup.</p>
       <h2>A publication taking shape</h2>
-      <p>MyJourney is an independent journal about the home workspace. The initial content awaits owner and editorial review. Publisher details, a working contact address, and the production privacy information must be confirmed before public launch. We do not claim Amazon approval or specialist credentials.</p>
+      <p>{site.brand} is an independent journal about the home workspace. The initial content awaits owner and editorial review. Publisher details, a working contact address, and the production privacy information must be confirmed before public launch. We do not claim Amazon approval or specialist credentials.</p>
       <div class="correction-box">
         <p>Read how drafts become published articles in our <a class="text-link" href="/editorial-policy/">editorial policy</a>, or visit <a class="text-link" href="/contact/">contact and corrections</a>.</p>
       </div>
