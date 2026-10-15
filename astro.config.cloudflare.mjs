@@ -4,9 +4,10 @@ import react from '@astrojs/react';
 import emdash from 'emdash/astro';
 import { d1, r2 } from '@emdash-cms/cloudflare';
 import { fileURLToPath } from 'node:url';
+import { productionOrigin } from './site.config.mjs';
 
 try { process.loadEnvFile('.env'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-const site = process.env.SITE_URL || process.env.EMDASH_SITE_URL;
+const site = process.env.SITE_URL || process.env.EMDASH_SITE_URL || productionOrigin;
 
 export default defineConfig({
   output: 'server',

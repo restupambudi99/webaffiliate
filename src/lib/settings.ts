@@ -1,3 +1,5 @@
+import { productionOrigin } from '../../site.config.mjs';
+
 const env = (name: string): string => (import.meta.env?.[name] as string | undefined) || process.env[name] || '';
 export const settings = {
   brand: 'Desk Edit',
@@ -9,7 +11,7 @@ export const settings = {
   siteRegistered: env('AMAZON_SITE_REGISTERED') === 'true',
   disclosure: 'As an Amazon Associate I earn from qualifying purchases.',
   preview: env('STAGING_PREVIEW') === 'true',
-  siteUrl: env('SITE_URL'),
+  siteUrl: env('SITE_URL') || productionOrigin,
 } as const;
 
 export type ProductReference = {

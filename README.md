@@ -4,6 +4,8 @@ Independent home workspace publication built with **Astro 6 + EmDash CMS 1.2**. 
 
 Brand: **Desk Edit** · Audience: English-speaking US home-office readers · Contact: `nikolasjuan34@gmail.com`.
 
+Production hostname: **https://affiliate.restupambudi.my.id**. Cloudflare custom-domain routing and HTTP → HTTPS redirect are configured. DNS activation and a valid TLS certificate must be verified after account deployment; see [domain setup](docs/DOMAIN.md).
+
 ## Run locally
 
 Requires Node 24 and npm. From the repository root:
