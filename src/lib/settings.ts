@@ -2,7 +2,7 @@ import { productionOrigin } from '../../site.config.mjs';
 
 const env = (name: string): string => (import.meta.env?.[name] as string | undefined) || process.env[name] || '';
 export const settings = {
-  brand: 'Desk Edit',
+  brand: 'MyJourney',
   tagline: 'Make room for better work.',
   description: 'Thoughtful guides to a calmer, more useful home workspace. Understand the choices before you buy.',
   contactEmail: env('CONTACT_EMAIL') || 'nikolasjuan34@gmail.com',

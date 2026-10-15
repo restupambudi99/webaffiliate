@@ -1,8 +1,8 @@
-# Desk Edit
+# MyJourney
 
 Independent home workspace publication built with **Astro 6 + EmDash CMS 1.2**. Custom editorial theme with responsive layouts, live CMS content, practical buying guides, category filters, search, comparisons, and policy pages.
 
-Brand: **Desk Edit** · Audience: English-speaking US home-office readers · Contact: `nikolasjuan34@gmail.com`.
+Brand: **MyJourney** · Audience: English-speaking US home-office readers · Contact: `nikolasjuan34@gmail.com`.
 
 Production site: **[affiliate.restupambudi.my.id](https://affiliate.restupambudi.my.id)**. The application is deployed on the owner's Ubuntu 22.04 VPS with an isolated Node 24.16.0 runtime, SQLite, and local media storage. Cloudflare proxy and HTTPS are active; the public homepage returns HTTP 200 and HTTP requests redirect with 308 while preserving the path and query. The origin has a valid Let's Encrypt certificate. See [VPS operations](docs/VPS.md) and [domain setup](docs/DOMAIN.md).
 

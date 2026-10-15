@@ -1,4 +1,4 @@
-# Desk Edit — hasil validasi
+# MyJourney — hasil validasi
 
 Validasi selesai pada 15 Oktober 2026 (Asia/Bangkok). Source aplikasi berada pada repository ini; draft editorial belum menjadi artikel publik yang sudah disetujui.
 

@@ -1,5 +1,5 @@
 [Unit]
-Description=Desk Edit Astro and EmDash CMS
+Description=MyJourney Astro and EmDash CMS
 After=network.target
 
 [Service]

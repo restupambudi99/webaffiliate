@@ -1,4 +1,4 @@
-# Desk Edit — EmDash CMS
+# MyJourney — EmDash CMS
 
 Website ini memakai EmDash CMS 1.2.0 asli di dalam Astro 6.4.8. Halaman publik dirender di server dan membaca revisi yang telah diterbitkan. Panel admin ada di `/_emdash/admin/`; menyimpan draft tidak mengubah artikel publik.
 
@@ -110,7 +110,7 @@ Output build alternatif berada di `dist-cloudflare/`, terpisah dari `dist/` Node
 
 ## Sebelum mengaktifkan monetisasi
 
-Mode awal `editorial_only`, tanpa contoh tag Associates. Isi tag milik pemilik dan aktifkan mode affiliate hanya setelah akun, disclosure, daftar Site, dan artikel ditinjau. Jangan memakai harga/stok/rating Amazon, logo Amazon, ataupun API produk pada MVP. Nama brand Desk Edit masih nama kerja yang dapat diganti ketika pemilik menentukan brand dan domain.
+Mode awal `editorial_only`, tanpa contoh tag Associates. Isi tag milik pemilik dan aktifkan mode affiliate hanya setelah akun, disclosure, daftar Site, dan artikel ditinjau. Jangan memakai harga/stok/rating Amazon, logo Amazon, ataupun API produk pada MVP. Brand website adalah MyJourney, sesuai nama yang dikonfirmasi pemilik.
 
 ## Referensi resmi
 

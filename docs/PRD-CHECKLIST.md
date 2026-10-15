@@ -1,6 +1,6 @@
 # Status implementasi PRD
 
-Brand **Desk Edit**, niche perlengkapan meja kerja, bahasa Inggris, dan repository `restupambudi99/webaffiliate` dikonfirmasi pemilik. Email kontak: `nikolasjuan34@gmail.com`. Domain menyusul.
+Brand **MyJourney**, niche perlengkapan meja kerja, bahasa Inggris, dan repository `restupambudi99/webaffiliate` dikonfirmasi pemilik. Email kontak: `nikolasjuan34@gmail.com`. Domain menyusul.
 
 | Kode | Implementasi | Sisa pekerjaan operasional |
 | --- | --- | --- |

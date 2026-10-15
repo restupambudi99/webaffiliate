@@ -15,7 +15,7 @@ await mkdir('artifacts', { recursive: true });
 for (const width of [360, 768, 1440]) {
   await page.setViewportSize({ width, height: 1000 });
   await page.goto(base + '/', { waitUntil: 'networkidle' });
-  assert.equal(await page.title(), 'Desk Edit — Make room for better work');
+  assert.equal(await page.title(), 'MyJourney — Make room for better work');
   assert.equal(await page.locator('meta[name=robots]').getAttribute('content'), 'noindex, nofollow');
   assert.equal(await page.locator('.hero-photo').evaluate((image) => image.complete && image.naturalWidth > 0), true);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `Preview overflow at ${width}`);

@@ -17,8 +17,8 @@ const seed = {
   $schema: 'https://emdashcms.com/seed.schema.json',
   version: '1',
   defaultLocale: 'en',
-  meta: { name: 'Desk Edit editorial theme', description: 'Independent workspace guides with an editorial publication gate.', author: 'Desk Edit' },
-  settings: { title: 'Desk Edit', tagline: 'Make room for better work.', postsPerPage: 12, timezone: 'Asia/Bangkok' },
+  meta: { name: 'MyJourney editorial theme', description: 'Independent workspace guides with an editorial publication gate.', author: 'MyJourney' },
+  settings: { title: 'MyJourney', tagline: 'Make room for better work.', postsPerPage: 12, timezone: 'Asia/Bangkok' },
   collections: [
     {
       slug: 'guides', label: 'Editorial guides', labelSingular: 'Guide',

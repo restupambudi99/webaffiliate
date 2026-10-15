@@ -13,21 +13,21 @@ const active = Astro.url.pathname;
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta name="theme-color" content="#f8f7f2"/>
-    <title>{title ? `${title} — Desk Edit` : 'Desk Edit — Make room for better work'}</title>
+    <title>{title ? `${title} — ${settings.brand}` : `${settings.brand} — Make room for better work`}</title>
     <meta name="description" content={description}/>
     {canonical && <link rel="canonical" href={canonical}/>}
     {(noindex || settings.preview) && <meta name="robots" content="noindex, nofollow"/>}
-    <meta property="og:title" content={title || 'Desk Edit — Make room for better work'}/>
+    <meta property="og:title" content={title || `${settings.brand} — Make room for better work`}/>
     <meta property="og:description" content={description}/>
     <meta property="og:type" content="website"/>
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+    <link rel="icon" href="/favicon.svg?v=myjourney" type="image/svg+xml"/>
     <slot name="head"/>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="container header-inner">
-        <a class="logo" href="/" aria-label="Desk Edit home">desk edit<span class="logo-dot">.</span></a>
+        <a class="logo" href="/" aria-label={`${settings.brand} home`}>{settings.brand}<span class="logo-dot">.</span></a>
         <nav class="desktop-nav" aria-label="Main navigation">
           <a href="/guides/" aria-current={active==='/guides/' ? 'page' : undefined}>The guides</a>
           <a href="/comparisons/" aria-current={active==='/comparisons/' ? 'page' : undefined}>Comparisons</a>
@@ -39,17 +39,17 @@ const active = Astro.url.pathname;
           <button class="icon-button menu-toggle" aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav"><Icon name="menu"/></button>
         </div>
       </div>
-      <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile navigation" hidden><a href="/guides/">The guides</a><a href="/comparisons/">Comparisons</a><a href="/reviews/">Reviews</a><a href="/editorial-policy/">Our approach</a><a href="/about/">About Desk Edit</a></nav>
+      <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile navigation" hidden><a href="/guides/">The guides</a><a href="/comparisons/">Comparisons</a><a href="/reviews/">Reviews</a><a href="/editorial-policy/">Our approach</a><a href="/about/">About MyJourney</a></nav>
     </header>
     <main id="main"><slot/></main>
     <footer class="site-footer">
       <div class="container footer-grid">
-        <div class="footer-brand"><a class="logo" href="/">desk edit<span class="logo-dot">.</span></a><p>A considered workspace.<br/>A better everyday.</p><span class="footer-note">Independent editorial for the home office.</span></div>
+        <div class="footer-brand"><a class="logo" href="/">{settings.brand}<span class="logo-dot">.</span></a><p>A considered workspace.<br/>A better everyday.</p><span class="footer-note">Independent editorial for the home office.</span></div>
         <div><h2>Explore</h2><a href="/guides/">All guides</a><a href="/comparisons/">Comparisons</a><a href="/reviews/">Product reviews</a><a href="/search/">Search</a></div>
-        <div><h2>Desk Edit</h2><a href="/about/">About us</a><a href="/editorial-policy/">Editorial policy</a><a href="/contact/">Contact & corrections</a></div>
+        <div><h2>{settings.brand}</h2><a href="/about/">About us</a><a href="/editorial-policy/">Editorial policy</a><a href="/contact/">Contact & corrections</a></div>
         <div><h2>The details</h2><a href="/privacy/">Privacy policy</a><a href="/affiliate-disclosure/">Affiliate disclosure</a>{settings.preview && <span class="preview-label">Editorial draft preview</span>}</div>
       </div>
-      <div class="container footer-bottom"><p>© {new Date().getFullYear()} Desk Edit</p><p>{settings.affiliateMode==='affiliate' && settings.associateTag && settings.siteRegistered ? settings.disclosure : 'Editorial guides. No active affiliate links.'}</p><span>Made for a little more focus.</span></div>
+      <div class="container footer-bottom"><p>© {new Date().getFullYear()} {settings.brand}</p><p>{settings.affiliateMode==='affiliate' && settings.associateTag && settings.siteRegistered ? settings.disclosure : 'Editorial guides. No active affiliate links.'}</p><span>Made for a little more focus.</span></div>
     </footer>
     <script>
       const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
