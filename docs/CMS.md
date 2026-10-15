@@ -86,7 +86,7 @@ Gunakan satu lokasi SQLite dan satu direktori unggahan yang sama pada setiap res
 
 ### Status onboarding produksi — 15 Oktober 2026
 
-Pemeriksaan read-only database mengonfirmasi **1 user Admin, 1 credential passkey, dan `setup_complete=true`**. Akun pemilik adalah email Admin yang sudah terdaftar; email kontak publik tetap `nikolasjuan34@gmail.com`. Identitas pemilik dan credential lama tidak diganti. Username/password Basic Auth sementara sudah tidak diperlukan.
+Pemeriksaan read-only database mengonfirmasi **1 user Admin, 1 credential passkey, dan `setup_complete=true`**. Pemilik masuk menggunakan email yang terdaftar pada akun Admin; kontak publik tetap `nikolasjuan34@gmail.com`. Identitas pemilik dan credential lama tidak diganti. Username/password Basic Auth sementara sudah tidak diperlukan.
 
 Realm sementara OpenLiteSpeed telah dilepas dengan `deploy/complete-owner-setup.py`. Script memeriksa setup selesai dan credential milik Admin sebelum perubahan, mencadangkan vhost, membandingkan diagnostik, serta melakukan rollback bila pemeriksaan gagal. Autentikasi native EmDash tetap aktif. `deploy/configure-mcp-proxy.py` adalah alat historis sebelum pemilik pertama terbentuk; **jangan jalankan kembali pada instalasi aktif ini**.
 
@@ -100,15 +100,15 @@ Jangan mengimpor user, passkey, atau database development sebagai identitas pemi
 
 ### Login email/password dan pengaturan pertama
 
-Ekstensi proyek di `src/auth/` menyediakan rute melalui provider EmDash/Astro dan membuat session Astro nyata untuk user yang sama. Default `/_emdash/admin/login` diarahkan ke `/_emdash/admin/login/password`; `/_emdash/admin/login?method=passkey` mempertahankan metode lama. Login password tidak membutuhkan SMTP. **6 test password lulus; type check, build, deployment, dan login live belum diverifikasi.**
+Ekstensi proyek di `src/auth/` menyediakan rute melalui provider EmDash/Astro dan membuat session Astro nyata untuk user yang sama. Default `/_emdash/admin/login` diarahkan ke `/_emdash/admin/login/password`; `/_emdash/admin/login?method=passkey` mempertahankan metode lama. Login password tidak membutuhkan SMTP. **6 test password, type check 61 file tanpa error/warning/hint, build lokal/VPS, dan integrasi HTTP terisolasi lulus.** Versi [71de5c1](https://github.com/restupambudi99/webaffiliate/commit/71de5c181a1f7e01e7a99198fa4afd5b6a674205) sudah live; [GitHub Actions](https://github.com/restupambudi99/webaffiliate/actions/runs/38735973958) lulus. Pemeriksaan form HTTPS dan proteksi anonim lulus, sementara pilihan password dan login pertama pemilik masih tertunda.
 
-Pemilik memakai email Admin yang sudah terdaftar dan menentukan password sendiri, sepanjang 15–128 karakter. Operator VPS membuat berkas HTML privat melalui `scripts/password-owner-setup.ts`, dengan `MYJOURNEY_PASSWORD_DB=/var/lib/desk-edit/password-auth.db`, `EMDASH_DATABASE_URL` produksi, origin HTTPS, dan opsi `--output`. Petunjuk operator ada di [VPS](VPS.md). Script mengikat enrollment ke Admin yang sudah ada; tidak membuat akun baru.
+Pemilik menggunakan email terdaftar dan menentukan password sendiri, sepanjang 15–128 karakter. Berkas HTML enrollment privat telah disiapkan dan disalin ke lokasi lokal yang diabaikan Git. Pemeriksaan 15 Oktober 2026 pukul 19.43 Asia/Bangkok (12.43 UTC) menunjukkan **0 password tersimpan dan 1 enrollment**. Ini bukan bukti pemilik telah membuat password. Generator `scripts/password-owner-setup.ts` memakai `MYJOURNEY_PASSWORD_DB=/var/lib/desk-edit/password-auth.db`, database konten produksi, origin HTTPS, dan `--output`. Jangan menerbitkan ulang tautan sebagai langkah login rutin; ikuti [VPS](VPS.md) jika tautan kedaluwarsa.
 
 Tautan memakai fragment `#token=...`, berlaku satu jam, dan hanya sekali pakai; database menyimpan hash token. Jangan menyalin tautan atau berkas privat ke Git, uploads, isi artikel, pengaturan CMS, atau log. Hapus berkas HTML setelah dipakai. Untuk password yang sudah ada, penerbitan tautan baru memerlukan `--reset` secara eksplisit. Reset ini **tidak mencabut session lama atau token OAuth**; pencabutan akses tersebut merupakan tindakan terpisah.
 
 Password disimpan sebagai hash scrypt dengan salt acak, `N=65536`, `r=8`, `p=2` (kebutuhan dasar memori 64 MiB per pekerjaan). Maksimal dua pekerjaan KDF berjalan bersamaan. Pembatas percobaan disimpan persisten: 40/menit global dan 8/15 menit per email/jenis operasi. Request harus berasal dari origin yang tepat. State password berada di SQLite privat terpisah dan ikut dicadangkan, termasuk penanganan WAL yang konsisten.
 
-Magic link, undangan, dan pemulihan lewat email tetap belum tersedia tanpa provider email. Pengaturan/reset password di atas memakai jalur operator tanpa SMTP. Login password tidak menyetujui scope OAuth yang sebelumnya ditolak; setiap client tetap memerlukan consent dan pemeriksaan baca berizin. Tidak ada akun demo atau password bawaan.
+Magic link, undangan, dan pemulihan lewat email tetap belum tersedia tanpa provider email. Pengaturan/reset password memakai jalur operator tanpa SMTP. Percobaan OAuth sebelumnya terhenti; pengguna kini mengizinkan tujuh scope yang dicatat di [koneksi AI](AI-CONNECTIONS.md). Alur CLI sudah dimulai, tetapi consent browser dan pembacaan berizin masih tertunda. Tidak ada akun demo, password bawaan, atau klaim client sudah terhubung.
 
 ### Media dan cache pada VPS
 
