@@ -1,6 +1,6 @@
 # Menghubungkan AI ke MyJourney
 
-Kit ini menyiapkan konfigurasi **Codex**, **Claude Code**, dan petunjuk **ChatGPT web**. File konfigurasi tidak memindahkan login antarproduk. Gunakan email akun Admin yang sudah didaftarkan; email kontak publik tetap `nikolasjuan34@gmail.com`. Onboarding dan credential passkey tetap dipertahankan. Ekstensi login email/password lulus 6 test, type check 61 file, build Node, dan integrasi HTTP pada database sementara. Deployment VPS, form HTTPS publik, TLS origin, serta proteksi autentikasi sudah diperiksa. Tautan enrollment privat tersedia; pemilik masih perlu menetapkan password dan masuk sendiri. Konfigurasi ini belum membuktikan client terautentikasi atau siap menulis.
+Kit ini menyiapkan konfigurasi **Codex**, **Claude Code**, dan petunjuk **ChatGPT web**. File konfigurasi tidak memindahkan login antarproduk. Gunakan email akun Admin yang sudah didaftarkan; email kontak publik tetap `nikolasjuan34@gmail.com`. **Pemilik telah membuat password dan mengonfirmasi login di Chrome; OAuth Codex lokal serta dua pembacaan MCP berizin berhasil.** Passkey lama tetap dipertahankan. Tidak ada penulisan konten, media, atau pengaturan dalam verifikasi ini. Client lain tetap memerlukan login OAuth sendiri.
 
 | Server | URL | Fungsi |
 | --- | --- | --- |
@@ -11,11 +11,11 @@ Native MCP situs menggunakan Streamable HTTP. Token OAuth atau PAT diperlukan; c
 
 ## Login pemilik dan autentikasi client
 
-Jalur default baru adalah [login EmDash](https://affiliate.restupambudi.my.id/_emdash/admin/login), yang diarahkan ke `/_emdash/admin/login/password`. Pemilik masuk dengan email Admin yang sudah terdaftar setelah membuat password sendiri melalui tautan privat sekali pakai. Tidak perlu SMTP atau perangkat USB passkey. Metode lama tetap tersedia di `/_emdash/admin/login?method=passkey`; credential-nya tidak dihapus. Form dan redirect HTTPS baru sudah diverifikasi live; pemilik masih perlu menyimpan password sendiri.
+Jalur default adalah [login EmDash](https://affiliate.restupambudi.my.id/_emdash/admin/login), yang diarahkan ke `/_emdash/admin/login/password`. Pemilik masuk dengan email Admin terdaftar dan password yang telah dibuat sendiri. Tidak perlu SMTP atau perangkat USB passkey. Metode lama tetap tersedia di `/_emdash/admin/login?method=passkey`; credential-nya tidak dihapus. Enrollment awal telah terpakai; pemeriksaan read-only menunjukkan satu password dan nol enrollment. Berkas HTML setup yang terpakai sudah dihapus dari penyimpanan sementara lokal dan VPS.
 
-Client membuka browser untuk session native EmDash dan persetujuan OAuth. Percobaan sebelumnya terhenti; pengguna kini telah mengizinkan tujuh scope: `content:read`, `content:write`, `media:read`, `media:write`, `schema:read`, `settings:read`, dan `settings:manage`. Alur OAuth CLI sudah dimulai, namun masih menunggu consent browser dan pembacaan berizin. Otorisasi pengguna ini belum berarti token telah diterbitkan atau client sudah terhubung. MCP tetap memerlukan Bearer yang sah.
+Client membuka browser untuk session native EmDash dan persetujuan OAuth. Percobaan CLI awal pada 15 Oktober 2026 kedaluwarsa; percobaan baru berhasil dengan exit 0 dan pesan `Successfully logged in`. Consent browser selesai untuk tujuh scope yang telah diizinkan pengguna: `content:read`, `content:write`, `media:read`, `media:write`, `schema:read`, `settings:read`, dan `settings:manage`. `codex mcp list` menampilkan autentikasi OAuth untuk `myjourney`, dan pembacaan berizin berhasil. MCP tetap memerlukan Bearer yang sah.
 
-Basic Auth sementara sudah dilepas; jangan mengulang wizard atau script proxy onboarding historis. Jangan menaruh password, tautan enrollment, cookie, token, atau passkey dalam file MCP/Git. Pengaturan password dijelaskan di [CMS](CMS.md); pemilik masih perlu menetapkan password dan menyelesaikan login pertama.
+Basic Auth sementara sudah dilepas; jangan mengulang wizard atau script proxy onboarding historis. Jangan menaruh password, tautan enrollment, cookie, token, atau passkey dalam file MCP/Git. Pengaturan dan pemulihan password dijelaskan di [CMS](CMS.md).
 
 ## Codex
 
@@ -35,6 +35,10 @@ codex mcp login myjourney
 ```
 
 Codex mendukung OAuth dan bearer token dari environment. Kit hanya menyimpan URL; OAuth dimulai lewat perintah login, tanpa field `auth` tambahan atau token dalam konfigurasi. Client lokal pada host Codex yang sama berbagi konfigurasi; ChatGPT web tidak membacanya. [OpenAI Docs: MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+
+### Jika tab callback menampilkan connection refused
+
+Listener callback loopback dapat sudah ditutup setelah CLI menyimpan token, sehingga tab browser menampilkan `ERR_CONNECTION_REFUSED`. Pada koneksi ini CLI selesai dengan `Successfully logged in`, exit 0, status OAuth, serta dua panggilan baca yang berhasil; pesan tab tersebut tidak membatalkan hasilnya. Periksa `codex mcp list` dan pembacaan berizin sebelum memulai login baru. Untuk membuka CMS, gunakan [login canonical](https://affiliate.restupambudi.my.id/_emdash/admin/login), bukan URL callback `127.0.0.1` lama. Chat yang sudah terbuka mungkin perlu memuat ulang katalog MCP atau membuka chat baru agar tool muncul. Claude Code dan ChatGPT web tetap memerlukan OAuth masing-masing.
 
 ## Claude Code
 
@@ -105,6 +109,6 @@ Contoh prompt:
 
 ## Memeriksa koneksi
 
-Setelah deployment ekstensi password, `npm run mcp:check` pada domain publik kembali menghasilkan **6 lulus, 0 gagal**. Form HTTPS, redirect login, dan proteksi anonim juga lulus; rincian ada di [QA](QA.md). Pengujian ini tidak menggunakan password pemilik atau membuktikan token OAuth/pembacaan berizin. Jangan memakai `--require-admin-protection` pada produksi yang onboarding-nya sudah selesai; flag tersebut menguji Basic Auth tahap sebelumnya.
+Setelah deployment ekstensi password, `npm run mcp:check` pada domain publik kembali menghasilkan **6 lulus, 0 gagal**. Form HTTPS, redirect login, dan proteksi anonim juga lulus. Pemeriksaan smoke anonim ini terpisah dari verifikasi OAuth. Probe resmi `codex exec --ephemeral --sandbox read-only --ignore-user-config`, dengan allowlist hanya `settings_get` dan `schema_list_collections`, berhasil memanggil kedua tool native tanpa error dan selesai dengan exit 0: judul situs `MyJourney`, collection `guides`. Tidak ada penulisan konten, media, atau pengaturan. Rincian ada di [QA](QA.md). Jangan memakai `--require-admin-protection` pada produksi yang onboarding-nya sudah selesai; flag tersebut menguji Basic Auth tahap sebelumnya.
 
-Minta daftar collection atau draft sebagai pemeriksaan baca berizin pertama. `401` dengan metadata OAuth menandakan autentikasi diperlukan; browser biasa yang mengakses MCP dengan GET dapat menerima `405` karena endpoint memakai POST. Jika challenge Basic Auth lama masih muncul, laporkan sebagai masalah proxy. Periksa hasil aktual tanpa menyalin kredensial ke log atau melonggarkan gate editorial.
+Untuk client lain, minta daftar collection atau draft sebagai pemeriksaan baca setelah OAuth. `401` dengan metadata OAuth menandakan autentikasi diperlukan; browser biasa yang mengakses MCP dengan GET dapat menerima `405` karena endpoint memakai POST. Jika challenge Basic Auth lama masih muncul, laporkan sebagai masalah proxy. Periksa hasil aktual tanpa menyalin kredensial ke log atau melonggarkan gate editorial.

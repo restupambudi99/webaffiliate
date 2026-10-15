@@ -59,7 +59,7 @@ CONTACT_EMAIL=nikolasjuan34@gmail.com
 
 Isi `EMDASH_ENCRYPTION_KEY` dengan key EmDash yang dihasilkan secara privat; gunakan key lama untuk instalasi yang sudah dipakai. Key dibutuhkan saat runtime, bukan untuk build. Contoh generator format EmDash menggunakan Node tersedia pada bagian konfigurasi Docker di bawah; hasilnya disimpan dalam `/etc/desk-edit.env` untuk jalur native.
 
-`MYJOURNEY_PASSWORD_DB` menunjuk SQLite privat di direktori state yang dapat ditulis `deskedit`, dengan mode file **0600** yang telah diperiksa. Jangan mengarahkannya ke Git, uploads, atau database konten. **6 test ekstensi, type check 61 file, build lokal/VPS, integrasi HTTP terisolasi, dan pemeriksaan rute HTTPS live lulus.** Pemilik masih perlu membuat password dan menyelesaikan login pertama; OAuth belum dinyatakan terhubung.
+`MYJOURNEY_PASSWORD_DB` menunjuk SQLite privat di direktori state yang dapat ditulis `deskedit`, dengan mode file **0600** yang telah diperiksa. Jangan mengarahkannya ke Git, uploads, atau database konten. **6 test ekstensi, type check 61 file, build lokal/VPS, integrasi HTTP terisolasi, dan pemeriksaan rute HTTPS live lulus.** Pemilik telah mengonfirmasi login password di Chrome; OAuth Codex lokal dan dua pembacaan MCP berizin juga berhasil.
 
 Build dari direktori aplikasi dengan origin dan path produksi yang sama. Environment berikut hanya mengandung konfigurasi nonsecret:
 
@@ -90,7 +90,7 @@ curl --fail http://127.0.0.1:4321/
 
 Service systemd menjalankan aplikasi [71de5c1](https://github.com/restupambudi99/webaffiliate/commit/71de5c181a1f7e01e7a99198fa4afd5b6a674205). Cadangan deployment berada di `/opt/desk-edit/backups/password-login-20261015T123722Z`; [GitHub Actions](https://github.com/restupambudi99/webaffiliate/actions/runs/38735973958) lulus. Produksi memakai `CMS_ADMIN_ENABLED=true`; default source false tetap berlaku untuk pemasangan baru atau maintenance. Kontak publik tetap `nikolasjuan34@gmail.com`.
 
-Pemeriksaan read-only 15 Oktober 2026 pukul **19.43 Asia/Bangkok (12.43 UTC)** menunjukkan **1 Admin, 1 credential passkey, 0 password tersimpan, dan 1 enrollment**, dengan onboarding selesai. Gunakan email yang terdaftar pada akun Admin. Form login sudah live; pembuatan password/login pertama oleh pemilik, upload media, dan OAuth client belum dinyatakan selesai.
+Snapshot historis 15 Oktober 2026 pukul **19.43 Asia/Bangkok (12.43 UTC)** mencatat 1 Admin, 1 passkey, 0 password, dan 1 enrollment. Setelah pemilik membuat password, pemeriksaan read-only terkini menunjukkan **1 user, 1 password, dan 0 enrollment**, dengan passkey tetap tersimpan. Gunakan email Admin terdaftar dan password yang sudah dibuat. Dashboard terautentikasi menampilkan MyJourney, satu user, sepuluh draft, dan nol media; verifikasi ini tidak melakukan upload media.
 
 ### MCP dan proxy onboarding
 
@@ -100,7 +100,7 @@ Realm sementara dilepas menggunakan `deploy/complete-owner-setup.py`, yang menol
 
 Status historis sesudah pelepasan, sebelum ekstensi password: halaman login native HTML 200, admin anonim 302 menuju login, API settings privat 401, dan MCP anonim 401 dengan challenge Bearer. POST konfigurasi ulang setup ditolak 409; pembuatan/verifikasi Admin pertama ditolak 400. Tampilan setup dapat tetap 200 tanpa membuka kembali API onboarding.
 
-Pemeriksaan domain publik setelah deployment password memakai **`npm run mcp:check`** kembali menghasilkan **6 lulus, 0 gagal**. `--require-admin-protection` hanya untuk tahap historis Basic Auth, sehingga jangan dipakai pada produksi sesudah onboarding. Metadata harus menunjuk origin HTTPS publik, bukan `localhost`. Lihat [koneksi AI](AI-CONNECTIONS.md) untuk autentikasi client; pemeriksaan anonim ini tidak membuktikan login pemilik atau OAuth sudah berhasil.
+Pemeriksaan domain publik setelah deployment password memakai **`npm run mcp:check`** kembali menghasilkan **6 lulus, 0 gagal**. `--require-admin-protection` hanya untuk tahap historis Basic Auth, sehingga jangan dipakai pada produksi sesudah onboarding. Metadata harus menunjuk origin HTTPS publik, bukan `localhost`. Secara terpisah, OAuth Codex lokal serta pembacaan `settings_get` dan `schema_list_collections` berhasil. Lihat [koneksi AI](AI-CONNECTIONS.md) untuk autentikasi dan penjelasan tab callback; tidak ada penulisan konten, media, atau pengaturan dalam verifikasi ini.
 
 Untuk cadangan native yang konsisten, gunakan mekanisme backup SQLite atau hentikan hanya service `desk-edit`, arsipkan seluruh `/var/lib/desk-edit`, lalu mulai kembali service. Sertakan **content.db dan password-auth.db beserta WAL/SHM yang diperlukan**, uploads, dan state sesi. Simpan `/etc/desk-edit.env` dan key sebagai cadangan privat terpisah. Periksa hasil backup dan uji restore ke lokasi percobaan; jangan menyalin hanya file utama SQLite saat masih ditulis. Database password tidak boleh dibagikan melalui Git, media library, atau pengaturan konten.
 
@@ -108,7 +108,7 @@ Untuk cadangan native yang konsisten, gunakan mekanisme backup SQLite atau henti
 
 Provider di `src/auth/provider.mjs` mendaftarkan rute login/setup pada Astro. `password-api.ts` membuat ulang session Astro native untuk user yang sama setelah autentikasi; password tidak menjadi kredensial MCP dan tidak menyetujui scope OAuth otomatis. Credential passkey lama tetap disimpan.
 
-Versi baru dan rute HTTPS sudah diverifikasi. HTML enrollment privat telah disiapkan dan disalin ke lokasi lokal yang diabaikan Git; pemilik membukanya melalui File Explorer untuk menentukan password sendiri. Jangan menjalankan generator kembali sebagai langkah login rutin. Jika tautan kedaluwarsa dan perlu diganti, operator memakai pola berikut sebagai user service, dengan path output privat di luar checkout dan uploads:
+Password pemilik sudah dibuat dan login Chrome dikonfirmasi. Enrollment telah terpakai; HTML privatnya sudah dihapus dari penyimpanan sementara lokal dan VPS. Jangan menjalankan generator sebagai langkah login rutin. Pola berikut hanya untuk instalasi baru yang belum mempunyai password; untuk reset akun aktif, tambahkan `--reset` secara eksplisit sebagaimana dijelaskan di bawah. Operator menjalankannya sebagai user service, dengan path output privat di luar checkout dan uploads:
 
 ```bash
 sudo -u deskedit env \
@@ -196,11 +196,11 @@ Jalur native sudah dihubungkan melalui OpenLiteSpeed dan Cloudflare DNS, dengan 
 
 Proxy meneruskan ke port loopback aplikasi dengan hostname HTTPS final dan informasi protokol dari proxy yang dipercaya. Pertahankan pengecualian cache bersama untuk admin dan API autentikasi. Situs Node tidak melewati `src/worker.ts`; redirect HTTP ke HTTPS ditangani pada proxy dan telah diperiksa mempertahankan path/query.
 
-Onboarding produksi sudah selesai. Redirect [login EmDash](https://affiliate.restupambudi.my.id/_emdash/admin/login) ke `/_emdash/admin/login/password` dan form HTTPS 200 sudah diperiksa live, tanpa Basic Auth dan dengan `private, no-store`. Gunakan akun pemilik yang sudah ada setelah enrollment password selesai. Metode passkey tetap tersedia melalui `/_emdash/admin/login?method=passkey`. Username/password Basic Auth lama tidak diperlukan; jangan mengulang wizard atau mereset database CMS untuk login.
+Onboarding produksi sudah selesai. Redirect [login EmDash](https://affiliate.restupambudi.my.id/_emdash/admin/login) ke `/_emdash/admin/login/password` dan form HTTPS 200 sudah diperiksa live, tanpa Basic Auth dan dengan `private, no-store`. Gunakan akun pemilik dan password yang sudah dibuat. Metode passkey tetap tersedia melalui `/_emdash/admin/login?method=passkey`. Username/password Basic Auth lama tidak diperlukan; jangan mengulang wizard atau mereset database CMS untuk login.
 
 Untuk instalasi baru atau maintenance, `CMS_ADMIN_ENABLED=false` menahan admin, API setup, dan URL media CMS dengan HTTP 503 serta `private, no-store`; halaman publik dan asset tema tetap tersedia. Flag ini berlaku pada middleware Node hasil build produksi dan Worker Cloudflare, bukan pada server development lokal. Instalasi baru harus melindungi wizard sampai pemilik siap. Mengubah flag runtime dan me-restart service tidak memerlukan rebuild.
 
-**Pertahankan `CMS_ADMIN_ENABLED=true`** agar login, penyuntingan, API, dan gambar CMS publik tetap bekerja. Mengembalikan flag ke false juga memblokir media artikel; gunakan hanya untuk hold maintenance yang disengaja. Pengguna sudah mengizinkan tujuh scope di [koneksi AI](AI-CONNECTIONS.md); alur CLI berjalan tetapi masih menunggu consent browser dan pembacaan berizin. Pembuatan password/login pertama tetap memerlukan tindakan pemilik. Lihat [petunjuk CMS](CMS.md) untuk workflow editorial, draft, sample content, dan kunci enkripsi.
+**Pertahankan `CMS_ADMIN_ENABLED=true`** agar login, penyuntingan, API, dan gambar CMS publik tetap bekerja. Mengembalikan flag ke false juga memblokir media artikel; gunakan hanya untuk hold maintenance yang disengaja. Consent tujuh scope dan OAuth Codex lokal berhasil, termasuk dua pembacaan berizin; client lain tetap memerlukan OAuth sendiri. Lihat [koneksi AI](AI-CONNECTIONS.md) dan [petunjuk CMS](CMS.md).
 
 ## Pembaruan dan cadangan
 
