@@ -4,7 +4,7 @@ Independent home workspace publication built with **Astro 6 + EmDash CMS 1.2**. 
 
 Brand: **Desk Edit** · Audience: English-speaking US home-office readers · Contact: `nikolasjuan34@gmail.com`.
 
-Production hostname: **https://affiliate.restupambudi.my.id**. The primary deployment is the owner's existing Ubuntu 22.04 VPS, using Node 24.11, SQLite, and local media storage. Cloudflare provides DNS and SSL in front of the VPS. Verify the deployed origin, DNS routing, and TLS using the [VPS operations guide](docs/VPS.md) and [domain setup](docs/DOMAIN.md).
+Production site: **[affiliate.restupambudi.my.id](https://affiliate.restupambudi.my.id)**. The application is deployed on the owner's Ubuntu 22.04 VPS with an isolated Node 24.16.0 runtime, SQLite, and local media storage. Cloudflare proxy and HTTPS are active; the public homepage returns HTTP 200 and HTTP requests redirect with 308 while preserving the path and query. The origin has a valid Let's Encrypt certificate. See [VPS operations](docs/VPS.md) and [domain setup](docs/DOMAIN.md).
 
 ## Run locally
 
@@ -33,15 +33,15 @@ npm start
 
 The server runs the Astro Node application with persistent SQLite content and a local uploads directory. Editors manage articles and upload images in the same **EmDash admin panel**. This deployment adds no media-service subscription or payment activation and requires no R2, Workers subscription, or external media server. It uses the VPS the owner already has.
 
-Build with `npm run build` and run the standalone server behind the VPS HTTPS reverse proxy. Keep the application port bound to loopback. Set `SITE_URL` and `EMDASH_SITE_URL` to `https://affiliate.restupambudi.my.id`, and configure persistent `EMDASH_DATABASE_URL` and `EMDASH_UPLOADS_DIR` locations outside disposable build output. The service name, installed paths, and port are recorded in [VPS operations](docs/VPS.md) after provisioning. Back up the database, uploaded files, and encryption key together.
+The `desk-edit` systemd service runs as `deskedit`, from `/opt/desk-edit/app`, using `/opt/desk-edit/runtime/node/bin/node`. It listens on `127.0.0.1:4321` behind the VPS HTTPS reverse proxy. Persistent state is stored at `/var/lib/desk-edit`: `content.db`, `uploads/`, and `sessions/`. Set `EMDASH_SESSIONS_DIR` explicitly alongside the database and upload paths. CMS uploads are limited to **5 MiB per file**. Build and runtime must use the same paths and HTTPS origin. Back up the database, uploaded files, and private environment configuration together; see [VPS operations](docs/VPS.md).
 
-The production application starts with `CMS_ADMIN_ENABLED=false`, holding all `/_emdash` routes, including setup APIs and uploaded CMS media, until the owner is ready to register a passkey. Enable it for owner onboarding, then **leave it true after the owner account is created** so normal authentication, editing, and public CMS media work. Use false only for a deliberate maintenance hold; it also interrupts media delivery. Local development is unaffected by the production hold. There are no fabricated admin credentials.
+The initial owner passkey is still pending, and production currently uses `CMS_ADMIN_ENABLED=false`. All `/_emdash` routes, including setup APIs and uploaded CMS media, remain held until the owner is ready. Enable it for owner onboarding, then **leave it true after the owner account is created** so normal authentication, editing, and public CMS media work. Use false only for a deliberate maintenance hold; it also interrupts media delivery. Local development is unaffected by the production hold. There are no fabricated admin credentials.
 
 Use the generated `EMDASH_ENCRYPTION_KEY` from the private environment configuration, keep a backup, and never commit it. See the [CMS and owner setup instructions](docs/CMS.md). The separate private online design preview is a static preview and does not host the CMS admin.
 
 ## Optional Cloudflare Workers scaffold
 
-The repository retains an alternative Workers build scaffold with D1 content, R2 media, and KV authentication sessions. It is **not the production deployment** and is not required for the VPS. The experimental KV media adapter was not released; its consistency limitations ruled it out for this project. Do not activate paid Cloudflare services or deploy this alternative as part of the current VPS setup. `workers.dev` and preview URLs remain disabled in the scaffold.
+The repository retains an alternative Workers build scaffold with D1 content, R2 media, and KV authentication sessions. It is **not the production deployment** and is not required for the VPS. Do not activate R2, paid Cloudflare services, or deploy this alternative as part of the current VPS setup. `workers.dev` and preview URLs remain disabled in the scaffold.
 
 ## Editorial and monetization controls
 

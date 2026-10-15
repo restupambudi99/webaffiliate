@@ -21,6 +21,7 @@ services:
       EMDASH_ENCRYPTION_KEY: ${EMDASH_ENCRYPTION_KEY:?Set a private EmDash encryption key in .env before starting}
       EMDASH_DATABASE_URL: file:/app/data/desk-edit.db
       EMDASH_UPLOADS_DIR: /app/data/uploads
+      EMDASH_SESSIONS_DIR: /app/data/sessions
       CMS_ADMIN_ENABLED: ${CMS_ADMIN_ENABLED:-false}
       STAGING_PREVIEW: "false"
     ports:

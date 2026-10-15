@@ -48,9 +48,9 @@ Seed di `seed/seed.json` dibangun dari `scripts/build-seed.mjs` dan contoh `src/
 
 ## Produksi utama: Node di VPS pemilik
 
-Produksi menggunakan VPS Ubuntu 22.04 yang sudah dimiliki pemilik, dengan Node.js 24.11, SQLite, dan penyimpanan unggahan lokal. Cloudflare melayani DNS dan SSL di depan VPS; aplikasi dan CMS berjalan di server Node. Media dikelola langsung melalui panel EmDash yang sama dengan artikel.
+Produksi sudah berjalan pada VPS Ubuntu 22.04 milik pemilik, dengan runtime Node.js 24.16.0 terisolasi, SQLite, dan penyimpanan unggahan lokal. Cloudflare proxy dan HTTPS aktif pada `https://affiliate.restupambudi.my.id`. Pemeriksaan deployment menunjukkan halaman utama publik mengembalikan HTTP 200, sedangkan HTTP dialihkan dengan 308 sambil mempertahankan path dan query. Origin memakai sertifikat Let's Encrypt yang valid sampai 13 Januari 2027 pada saat pemeriksaan. Media dikelola langsung melalui panel EmDash yang sama dengan artikel setelah pemilik menyelesaikan setup.
 
-Konfigurasi ini tidak membutuhkan R2, langganan Workers, aktivasi pembayaran, atau layanan media tambahan. Biaya VPS yang sudah dimiliki tetap mengikuti pengaturan pemilik. Aplikasi tidak mengaktifkan subscription baru. Prototipe media KV belum dirilis dan tidak dipakai pada produksi karena karakteristik konsistensinya tidak cocok dengan kebutuhan media CMS ini.
+Konfigurasi ini tidak membutuhkan R2, langganan Workers, aktivasi pembayaran, atau layanan media tambahan. Biaya VPS yang sudah dimiliki tetap mengikuti pengaturan pemilik. Aplikasi tidak mengaktifkan subscription baru.
 
 Urutan validasi dan build dari direktori proyek:
 
@@ -62,7 +62,19 @@ npm run check
 npm run build
 ```
 
-Server standalone dijalankan oleh service VPS, di belakang reverse proxy HTTPS. Tetapkan `HOST` ke loopback, `PORT` ke port internal yang dipilih saat provisioning, `EMDASH_DATABASE_URL` ke SQLite persisten, dan `EMDASH_UPLOADS_DIR` ke direktori unggahan persisten. Direktori data harus berada di luar `dist/` dan tidak boleh dihapus atau ditimpa saat rilis aplikasi diperbarui. Nama service, lokasi instalasi, dan port aktual dicatat dalam [panduan operasi VPS](VPS.md) setelah provisioning selesai; jangan menganggap contoh path sebagai lokasi produksi yang telah dipastikan.
+Server standalone dijalankan oleh service systemd **`desk-edit`**, sebagai user **`deskedit`**, dari **`/opt/desk-edit/app`**. Executable Node yang dipakai adalah **`/opt/desk-edit/runtime/node/bin/node`**; aplikasi listen pada **`127.0.0.1:4321`** di belakang reverse proxy HTTPS. Konfigurasi environment privat berada di `/etc/desk-edit.env`. Lihat [panduan operasi VPS](VPS.md) untuk pembaruan, restart, dan cadangan.
+
+State produksi dipisahkan dari checkout dan hasil build:
+
+| Variabel | Nilai produksi |
+| --- | --- |
+| `HOST` | `127.0.0.1` |
+| `PORT` | `4321` |
+| `EMDASH_DATABASE_URL` | `file:/var/lib/desk-edit/content.db` |
+| `EMDASH_UPLOADS_DIR` | `/var/lib/desk-edit/uploads` |
+| `EMDASH_SESSIONS_DIR` | `/var/lib/desk-edit/sessions` |
+
+Tetapkan direktori session secara eksplisit, bersama path database dan unggahan, saat build dan runtime. Direktori state di luar `dist/` ini tidak boleh dihapus atau ditimpa saat rilis aplikasi diperbarui.
 
 Variabel produksi harus memakai `STAGING_PREVIEW=false`, `AFFILIATE_MODE=editorial_only`, serta `SITE_URL` dan `EMDASH_SITE_URL` bernilai `https://affiliate.restupambudi.my.id`. Origin tersebut harus tersedia saat build dan runtime. Simpan `EMDASH_ENCRYPTION_KEY` di konfigurasi environment privat, bukan di Git. Jangan memakai kunci development atau menggantinya tanpa prosedur pemulihan data yang sesuai.
 
@@ -70,9 +82,9 @@ Gunakan satu lokasi SQLite dan satu direktori unggahan yang sama pada setiap res
 
 ### Setup pemilik dan penahanan CMS produksi
 
-Pada Node produksi, `CMS_ADMIN_ENABLED` bernilai `"false"` secara default. Penahanan ini menutup seluruh path `/_emdash` dan `/_emdash/*`, termasuk wizard, API setup, dan media library, dengan HTTP 503 serta `private, no-store`. Halaman publik dan gambar tema statis tetap tersedia. Penahanan produksi tidak mengubah perilaku `npm run dev` atau `npm run dev:staging` lokal.
+Passkey awal pemilik belum dibuat. Node produksi saat ini memakai `CMS_ADMIN_ENABLED="false"`, yang juga merupakan nilai default. Penahanan ini menutup seluruh path `/_emdash` dan `/_emdash/*`, termasuk wizard, API setup, dan media library, dengan HTTP 503 serta `private, no-store`. Halaman publik dan gambar tema statis tetap tersedia. Penahanan produksi tidak mengubah perilaku `npm run dev` atau `npm run dev:staging` lokal.
 
-Saat pemilik hadir dan siap menyimpan passkey, pastikan HTTPS pada domain final sudah aktif. Ubah `CMS_ADMIN_ENABLED` dalam environment service VPS menjadi `"true"`, lalu restart service mengikuti [panduan VPS](VPS.md). Aktifkan hanya ketika pemilik siap menyelesaikan wizard pada sesi yang sama.
+Saat pemilik hadir dan siap menyimpan passkey, gunakan HTTPS pada domain final yang sudah aktif. Ubah `CMS_ADMIN_ENABLED` dalam `/etc/desk-edit.env` menjadi `"true"`, lalu jalankan `sudo systemctl restart desk-edit` mengikuti [panduan VPS](VPS.md). Aktifkan hanya ketika pemilik siap menyelesaikan wizard pada sesi yang sama.
 
 Pemilik membuka `https://affiliate.restupambudi.my.id/_emdash/admin/setup`, mengisi judul situs serta email/nama miliknya, memilih **Include sample content** bila ingin memasukkan 10 kerangka artikel draft, kemudian mendaftarkan passkey sendiri. Jangan memakai kredensial buatan atau bypass development. EmDash menyelesaikan setup setelah registrasi passkey berhasil. Pastikan login pemilik berhasil sebelum menutup sesi.
 
@@ -84,13 +96,13 @@ Tanpa provider email yang dikonfigurasi, magic link, undangan email, dan pemulih
 
 ### Media dan cache pada VPS
 
-Unggah gambar melalui **Media library** EmDash; file disimpan pada direktori lokal yang dikonfigurasi oleh `EMDASH_UPLOADS_DIR`, sementara metadata berada di SQLite. Gambar tema tetap merupakan file statis di `public/`. Batas upload efektif mengikuti konfigurasi aplikasi dan reverse proxy VPS, bukan kuota prototipe KV. Detail batas yang dipasang harus dicatat di panduan VPS setelah diverifikasi.
+Unggah gambar melalui **Media library** EmDash; file disimpan di `/var/lib/desk-edit/uploads`, sementara metadata berada di SQLite. Batas upload aplikasi adalah **5 MiB per file**. Gambar tema tetap merupakan file statis di `public/`. Session filesystem Astro memakai `/var/lib/desk-edit/sessions` melalui `EMDASH_SESSIONS_DIR`, sehingga sesi tidak disimpan pada direktori dependency yang berganti saat deployment.
 
 Jangan mengaktifkan cache HTML bersama tanpa invalidasi saat publish. Rute admin/API dan respons pribadi harus tetap `private, no-store`. Cloudflare tidak boleh menyimpan cache halaman setup, login, maupun respons editor. Cache aset publik diatur terpisah agar tidak menahan perubahan konten atau sesi CMS.
 
 ## Scaffold alternatif Cloudflare Workers
 
-Repository mempertahankan scaffold alternatif `astro.config.cloudflare.mjs` untuk Workers dengan D1 (`DB`), R2 (`MEDIA`), dan KV (`SESSION`) untuk sesi autentikasi. Scaffold ini **tidak dipakai pada produksi VPS**. Prototipe media `MEDIA_KV` tidak dirilis sebagai penyimpanan produksi dan tidak menggantikan penyimpanan lokal VPS.
+Repository mempertahankan scaffold alternatif `astro.config.cloudflare.mjs` untuk Workers dengan D1 (`DB`), R2 (`MEDIA`), dan KV (`SESSION`) untuk sesi autentikasi. Scaffold ini **tidak dipakai pada produksi VPS**.
 
 Output build alternatif berada di `dist-cloudflare/`, terpisah dari `dist/` Node. `workers_dev` dan `preview_urls` dinonaktifkan pada scaffold. Jangan menjalankan deployment Workers, mengaktifkan R2, atau menambah billing sebagai bagian dari setup produksi saat ini. Cloudflare pada arsitektur utama digunakan untuk DNS dan SSL; database, sesi aplikasi, serta file media dikelola oleh aplikasi Node di VPS.
 

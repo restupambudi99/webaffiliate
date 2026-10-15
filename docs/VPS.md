@@ -1,12 +1,32 @@
 # VPS Node — systemd dan opsi Docker
 
-Deployment utama memakai Node.js 24 yang sudah tersedia di VPS, service systemd `desk-edit`, SQLite, dan penyimpanan unggahan lokal. Berkas pada panduan ini adalah konfigurasi yang dapat ditinjau; penyusunan berkas tidak melakukan instalasi atau perubahan remote.
+Deployment utama sudah aktif di VPS menggunakan Node.js 24.16.0 terisolasi, service systemd `desk-edit`, SQLite, dan penyimpanan unggahan lokal. Situs tersedia melalui [origin HTTPS produksi](https://affiliate.restupambudi.my.id). Docker tetap merupakan opsi alternatif yang belum dibangun atau diuji.
 
-VPS yang telah diperiksa memakai Ubuntu 22.04. OpenLiteSpeed sudah memakai port 80/443 dan Docker menjalankan layanan Evolution API. Pengaturan DNS Cloudflare, TLS, dan reverse proxy OpenLiteSpeed dikerjakan pada konfigurasi server yang sudah ada. Panduan ini tidak menambahkan proxy publik atau mengganti layanan lain.
+VPS memakai Ubuntu 22.04. OpenLiteSpeed menangani port 80/443 dan proxy ke aplikasi; proxy DNS Cloudflare aktif. Container Evolution API yang sudah ada tetap terpisah. Sertifikat Let's Encrypt pada origin telah terbit: pemeriksaan langsung origin menghasilkan HTTP 200 dan verifikasi TLS 0. Redirect HTTP menghasilkan 308 dengan path serta query tetap utuh.
 
 ## Deployment utama: Node dan systemd
 
-Checkout aplikasi berada di `/opt/desk-edit/app`. Service memakai akun khusus `deskedit:deskedit`, proses `/usr/local/bin/node`, dan listen pada `127.0.0.1:4321`. Unit lokal tersedia di [`deploy/desk-edit.service`](../deploy/desk-edit.service). Path executable perlu tetap sesuai hasil pemeriksaan Node pada VPS.
+Checkout aplikasi berada di `/opt/desk-edit/app`. Service aktif memakai akun khusus `deskedit:deskedit`, executable `/opt/desk-edit/runtime/node/bin/node`, dan listen pada `127.0.0.1:4321`. Unit tersedia di [`deploy/desk-edit.service`](../deploy/desk-edit.service). Node global 24.11 tidak diubah.
+
+Runtime 24.16.0 diunduh dari distribusi resmi Node dan checksum SHA-256 diverifikasi sebelum pemasangan pada direktori khusus aplikasi. Berikut pola untuk mereproduksi pemasangan runtime; tidak perlu dijalankan kembali pada instalasi aktif:
+
+```bash
+set -e
+node_release=24.16.0
+node_arch="$(node -p 'process.arch')"
+node_archive="node-v${node_release}-linux-${node_arch}.tar.xz"
+node_install_tmp="$(mktemp -d)"
+cd "$node_install_tmp"
+curl --fail --silent --show-error --location --remote-name "https://nodejs.org/dist/v${node_release}/${node_archive}"
+curl --fail --silent --show-error --location --remote-name "https://nodejs.org/dist/v${node_release}/SHASUMS256.txt"
+grep " ${node_archive}$" SHASUMS256.txt | sha256sum --check -
+# Lanjutkan hanya jika pemeriksaan menampilkan OK.
+sudo install -d /opt/desk-edit/runtime/node
+sudo tar -xJf "$node_archive" --strip-components=1 -C /opt/desk-edit/runtime/node
+/opt/desk-edit/runtime/node/bin/node --version
+```
+
+Langkah verifikasi harus berhasil sebelum ekstraksi. Instalasi ini tidak mengganti `/usr/local/bin/node` atau paket Node global.
 
 Direktori state persisten `/var/lib/desk-edit` menyimpan:
 
@@ -14,7 +34,7 @@ Direktori state persisten `/var/lib/desk-edit` menyimpan:
 - `uploads/` untuk media dan arsip EmDash.
 - `sessions/` untuk session filesystem Astro.
 
-Siapkan akun `deskedit`, checkout, dan subdirektori state dengan kepemilikan yang sesuai sebelum menjalankan service. `StateDirectory=desk-edit` membuat direktori induk state dengan mode `0750`; aplikasi perlu dapat menulis ke subdirektori unggahan dan session. Direktori default session adapter Node `/opt/desk-edit/app/node_modules/.astro/sessions` harus diarahkan lewat symlink ke `/var/lib/desk-edit/sessions` setelah dependency terpasang. Bila path session sudah berisi data, periksa dan pindahkan data secara terencana sebelum membuat symlink.
+Akun `deskedit` dan direktori state sudah disiapkan. SQLite `/var/lib/desk-edit/content.db` diinisialisasi otomatis oleh aplikasi. `StateDirectory=desk-edit` mengelola direktori induk dengan mode `0750`, dan akun service dapat menulis ke direktori unggahan serta session. Session memakai `sessionDrivers.fsLite` dengan `EMDASH_SESSIONS_DIR=/var/lib/desk-edit/sessions` secara eksplisit; tidak memerlukan symlink ke `node_modules`.
 
 Simpan konfigurasi runtime di `/etc/desk-edit.env`, milik `root:root` dengan mode `0600`. systemd memuat berkas sebelum menjalankan proses sebagai `deskedit`. Jangan menaruh key produksi dalam checkout, build argument, atau image.
 
@@ -26,6 +46,7 @@ SITE_URL=https://affiliate.restupambudi.my.id
 EMDASH_SITE_URL=https://affiliate.restupambudi.my.id
 EMDASH_DATABASE_URL=file:/var/lib/desk-edit/content.db
 EMDASH_UPLOADS_DIR=/var/lib/desk-edit/uploads
+EMDASH_SESSIONS_DIR=/var/lib/desk-edit/sessions
 EMDASH_ENCRYPTION_KEY=
 CMS_ADMIN_ENABLED=false
 STAGING_PREVIEW=false
@@ -40,17 +61,19 @@ Build dari direktori aplikasi dengan origin dan path produksi yang sama. Environ
 
 ```bash
 cd /opt/desk-edit/app
+export PATH="/opt/desk-edit/runtime/node/bin:$PATH"
 npm ci --include=dev --no-audit --no-fund
 SITE_URL=https://affiliate.restupambudi.my.id \
 EMDASH_SITE_URL=https://affiliate.restupambudi.my.id \
 EMDASH_DATABASE_URL=file:/var/lib/desk-edit/content.db \
 EMDASH_UPLOADS_DIR=/var/lib/desk-edit/uploads \
+EMDASH_SESSIONS_DIR=/var/lib/desk-edit/sessions \
 CMS_ADMIN_ENABLED=false STAGING_PREVIEW=false npm run build
 ```
 
-`astro.config.mjs` menanam descriptor SQLite dan storage lokal pada hasil build. Path database/unggahan dan origin harus cocok pada build serta runtime; perubahan path atau domain memerlukan rebuild. Dependency dan hasil build perlu dapat dibaca akun service. Konfigurasi session default mengacu pada cache dependency; buat kembali symlink session setelah `npm ci` karena instalasi ulang dapat mengganti `node_modules`.
+`astro.config.mjs` menanam descriptor SQLite, storage lokal, dan konfigurasi session pada hasil build. Path database, unggahan, session, dan origin harus cocok pada build serta runtime; perubahan path atau domain memerlukan rebuild. Dependency dan hasil build perlu dapat dibaca akun service. Batas upload CMS pada integrasi Node adalah 5 MiB per file.
 
-Unit memakai `ProtectSystem=strict`, `ProtectHome=yes`, `PrivateTmp=yes`, dan `NoNewPrivileges=yes`; hanya `/var/lib/desk-edit` dibuka untuk penulisan state. Perubahan aplikasi/dependency dilakukan sebagai proses deployment, kemudian service direstart. Setelah source, key, direktori, dan symlink siap, pemasangan unit dilakukan oleh operator:
+Unit memakai `ProtectSystem=strict`, `ProtectHome=yes`, `PrivateTmp=yes`, dan `NoNewPrivileges=yes`; hanya `/var/lib/desk-edit` dibuka untuk penulisan state. Perubahan aplikasi/dependency dilakukan sebagai proses deployment, kemudian service direstart. Unit sudah terpasang; perintah berikut mendokumentasikan pemasangan ulang serta pemeriksaan oleh operator:
 
 ```bash
 sudo install -m 0644 deploy/desk-edit.service /etc/systemd/system/desk-edit.service
@@ -61,7 +84,7 @@ sudo journalctl -u desk-edit -n 100 --no-pager
 curl --fail http://127.0.0.1:4321/
 ```
 
-Pastikan CMS masih ditahan dengan HTTP 503 di `/_emdash/admin/`, sedangkan halaman utama dan asset statis tersedia. Pemeriksaan login, media, persistensi setelah restart, dan HTTPS dilakukan saat deployment remote oleh operator; unit belum diuji dengan systemd pada lingkungan pengembangan Windows ini.
+Service systemd sudah berjalan dan halaman publik serta asset tersedia. `CMS_ADMIN_ENABLED=false` masih aktif, sehingga `/_emdash/admin/` ditahan dengan HTTP 503 sambil menunggu pemilik mendaftarkan passkey. Login pemilik dan upload media belum dinyatakan selesai; keduanya diperiksa setelah onboarding pemilik.
 
 Untuk cadangan native yang konsisten, hentikan hanya service `desk-edit`, arsipkan seluruh `/var/lib/desk-edit` (termasuk WAL/SHM bila ada), lalu mulai kembali service. Simpan `/etc/desk-edit.env` dan key sebagai cadangan privat terpisah. Periksa hasil backup dan uji restore ke lokasi percobaan; hindari menyalin file SQLite yang sedang ditulis tanpa mekanisme backup SQLite.
 
@@ -79,11 +102,11 @@ Volume bernama `desk-edit-vps-data` dipasang pada `/app/data` dan menyimpan:
 
 - `/app/data/desk-edit.db`, beserta file SQLite WAL/SHM bila ada.
 - `/app/data/uploads/` untuk media CMS dan arsip yang dibuat EmDash.
-- `/app/data/sessions/` untuk session filesystem Astro. Direktori default adapter `/app/node_modules/.astro/sessions` diarahkan ke sini melalui symlink.
+- `/app/data/sessions/` untuk driver session filesystem Astro melalui `EMDASH_SESSIONS_DIR`.
 
 Direktori tersebut dibuat dengan kepemilikan user `node` di image. Volume kosong pertama menerima direktori tersebut dari image; volume yang sudah berisi data tetap dipakai. Jangan menggantinya dengan bind mount tanpa menyesuaikan izin UID/GID 1000. Gunakan satu replica aplikasi untuk deployment SQLite ini.
 
-`EMDASH_DATABASE_URL=file:/app/data/desk-edit.db` dan `EMDASH_UPLOADS_DIR=/app/data/uploads` ditetapkan saat build dan runtime. Integrasi EmDash menanam descriptor penyimpanan dalam hasil build, sehingga mengubah environment runtime saja tidak memindahkan database atau folder unggahan.
+`EMDASH_DATABASE_URL=file:/app/data/desk-edit.db`, `EMDASH_UPLOADS_DIR=/app/data/uploads`, dan `EMDASH_SESSIONS_DIR=/app/data/sessions` ditetapkan saat build dan runtime. Konfigurasi penyimpanan/session ditanam dalam hasil build, sehingga mengubah environment runtime saja tidak memindahkan state. Tidak ada symlink session yang diperlukan. Batas upload CMS tetap 5 MiB per file.
 
 ## Persiapan konfigurasi
 
@@ -131,9 +154,9 @@ Setelah startup, periksa bahwa halaman utama dan asset tampil, serta database da
 
 ## HTTPS dan setup pemilik
 
-Belum ada konfigurasi publik untuk OpenLiteSpeed, Nginx, Caddy, Traefik, atau tunnel dalam berkas ini. Periksa virtual host, sertifikat, proxy yang sudah ada, serta DNS sebelum menghubungkan domain ke proses baru.
+Jalur native sudah dihubungkan melalui OpenLiteSpeed dan Cloudflare DNS, dengan TLS Let's Encrypt pada origin. Berkas Docker tidak menambahkan konfigurasi proxy lain. Jika jalur Docker kelak dipilih, sesuaikan target proxy yang sudah ada setelah memeriksa port dan data, tanpa menambahkan listener publik yang bersaing.
 
-Proxy yang dipilih nanti harus meneruskan ke port loopback aplikasi, mempertahankan hostname HTTPS final dan informasi protokol dari proxy yang dipercaya, serta menghindari cache bersama untuk admin dan API autentikasi. Situs Node tidak melewati `src/worker.ts`, sehingga redirect HTTP ke HTTPS harus ditangani oleh proxy tersebut.
+Proxy meneruskan ke port loopback aplikasi dengan hostname HTTPS final dan informasi protokol dari proxy yang dipercaya. Pertahankan pengecualian cache bersama untuk admin dan API autentikasi. Situs Node tidak melewati `src/worker.ts`; redirect HTTP ke HTTPS ditangani pada proxy dan telah diperiksa mempertahankan path/query.
 
 Wizard pertama EmDash tidak boleh tersedia bagi pengunjung umum sebelum pemilik menyelesaikan pendaftaran passkey. `CMS_ADMIN_ENABLED=false` menahan admin, API setup, dan URL media CMS dengan HTTP 503 serta `private, no-store`; halaman publik dan asset tema tetap tersedia. Flag ini berlaku pada middleware Node hasil build produksi dan Worker Cloudflare, bukan pada server development lokal.
 
@@ -164,6 +187,7 @@ Belum ada service Immich atau integrasi media Immich yang ditambahkan. Jika VPS 
 ## Referensi
 
 - [Konfigurasi eksekusi service systemd](https://github.com/systemd/systemd/blob/main/man/systemd.exec.xml)
+- [Distribusi dan checksum resmi Node.js 24.16.0](https://nodejs.org/dist/v24.16.0/SHASUMS256.txt)
 - [Adapter Node dan standalone server Astro](https://docs.astro.build/en/guides/integrations-guide/node/)
 - [Session Astro](https://docs.astro.build/en/guides/sessions/)
 - [Volume Docker](https://docs.docker.com/engine/storage/volumes/)

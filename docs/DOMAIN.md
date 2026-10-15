@@ -24,6 +24,12 @@ Cache Cloudflare berlaku untuk file statis yang aman seperti gambar, CSS, dan Ja
 - Setup pemilik ditahan hingga pemilik siap membuat passkey sendiri; kemudian CMS diaktifkan untuk penggunaan normal.
 - Record domain induk tetap mempertahankan tujuan sebelumnya.
 
-Status pemeriksaan langsung dicatat setelah konfigurasi server dan DNS diterapkan.
+## Hasil pemeriksaan langsung, 15 Oktober 2026
+
+Subdomain sudah aktif dengan record A menuju VPS dan status **Proxied**. Cloudflare menampilkan **Full (strict)**. Website publik merespons HTTP 200 dengan header `server: cloudflare`; HTML tetap `DYNAMIC`, bukan cache bersama. Origin HTTPS juga merespons 200 dengan hasil validasi TLS 0. Sertifikat origin Let's Encrypt berlaku sampai 13 Januari 2027 dan memakai renewal hook OpenLiteSpeed pada instalasi acme.sh yang sudah ada.
+
+HTTP mengarah 308 ke HTTPS dengan path/query utuh. Beranda dan gambar berhasil dimuat pada browser desktop serta lebar 360 px, tanpa horizontal overflow; menu mobile berfungsi. Record root/www tetap memakai tujuan Vercel sebelumnya.
+
+Setup pemilik sedang dilindungi realm sementara OpenLiteSpeed pada `/_emdash/`: request anonim mendapat 401, sedangkan akses pemilik mendapat halaman wizard 200. Pengaman ini dilepas hanya setelah pemilik berhasil mendaftarkan passkey. Kredensial setup sementara dan key enkripsi tidak masuk repository.
 
 Referensi: [Full (strict)](https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/full-strict/), [Cache default behavior](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/).
