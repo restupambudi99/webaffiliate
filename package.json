@@ -1,0 +1,41 @@
+{
+  "name": "desk-edit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.16.0" },
+  "emdash": { "seed": "seed/seed.json" },
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1",
+    "dev:staging": "node scripts/run-staging.mjs dev",
+    "build": "node scripts/build-seed.mjs && astro build",
+    "build:staging": "node scripts/run-staging.mjs build",
+    "build:cloudflare": "node scripts/build-seed.mjs && astro build --config astro.config.cloudflare.mjs",
+    "preview": "astro preview --host 127.0.0.1",
+    "start": "node dist/server/entry.mjs",
+    "check": "astro check",
+    "seed:build": "node scripts/build-seed.mjs",
+    "seed:validate": "emdash seed seed/seed.json --validate",
+    "cms:key": "emdash secrets generate --write .env",
+    "cms:doctor": "emdash doctor",
+    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy"
+  },
+  "dependencies": {
+    "astro": "6.4.8",
+    "@astrojs/node": "10.1.4",
+    "@astrojs/react": "5.0.7",
+    "@astrojs/cloudflare": "13.7.0",
+    "@emdash-cms/cloudflare": "1.2.0",
+    "emdash": "1.2.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@cloudflare/workers-types": "5.20261014.1",
+    "typescript": "^5.9.3",
+    "wrangler": "4.151.0"
+  }
+}

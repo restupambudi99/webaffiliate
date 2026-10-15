@@ -1,0 +1,29 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { settings } from '../lib/settings';
+---
+<Layout title="Editorial policy" description="Desk Edit’s approach to evidence, publication review, corrections, illustrations, and commercial relationships.">
+  <div class="container policy-page">
+    <header class="page-heading">
+      <p class="eyebrow">Our approach</p>
+      <h1>Useful advice starts<br/>with honest evidence.</h1>
+      <p>What a guide can show, what it cannot, and how it earns publication.</p>
+    </header>
+    <div class="prose">
+      <h2>Answer a real question</h2>
+      <p>{settings.brand} develops guides around a specific reader decision. A draft should explain needs, fit, tradeoffs, and practical next steps. It should remain useful without shopping links. Product descriptions alone do not provide enough editorial value.</p>
+      <h2>Label the method</h2>
+      <p>The initial articles are labeled “Editorial guide” and remain drafts. They offer original planning frameworks and cite official documentation where it supports a technical point. They do not claim hands-on testing, product ratings, or named expert credentials.</p>
+      <p>A future researched product analysis must record its sources and explain its limits. A future hands-on review must have real testing records, a stated method, and a clear account of what was observed. Those labels cannot be added merely because a product was discussed.</p>
+      <h2>Review before publication</h2>
+      <p>The required workflow is: draft → research → editor review → compliance review → published → needs update → archived.</p>
+      <p>Before publication, the responsible publisher must confirm the author and editor, supporting sources, reader benefit, image rights, evidence type, actual publication date, and any conflicts of interest. The initial drafts have not completed that review.</p>
+      <p>AI-assisted drafts require human review. Original generated illustrations are identified as illustrations; they do not document a product test. Third-party material requires a valid basis for use, and a citation alone does not grant permission to copy it.</p>
+      <h2>Keep corrections visible</h2>
+      <p>Material factual changes must record what changed, why, who reviewed it, and the real revision date. A date should not be refreshed without a substantive change. Outdated guides move to “needs update”; content that should no longer be offered can be archived.</p>
+      <h2>Disclose commercial relationships</h2>
+      <p>Paid links and sponsorships require clear local disclosure. They do not replace evidence or remove the need to explain limitations. Affiliate links are currently inactive. See the <a class="text-link" href="/affiliate-disclosure/">affiliate disclosure</a> for the current configuration.</p>
+      <div class="correction-box"><p>Found a factual issue or missing context? Visit <a class="text-link" href="/contact/">contact and corrections</a> with the article URL and the relevant original source.</p></div>
+    </div>
+  </div>
+</Layout>

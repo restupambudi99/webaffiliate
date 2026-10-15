@@ -1,0 +1,61 @@
+---
+import '../styles/global.css';
+import Icon from '../components/Icon.astro';
+import { settings } from '../lib/settings';
+interface Props { title?: string; description?: string; noindex?: boolean }
+const { title, description=settings.description, noindex=false } = Astro.props;
+const canonical = settings.siteUrl ? new URL(Astro.url.pathname, settings.siteUrl).href : undefined;
+const active = Astro.url.pathname;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="theme-color" content="#f8f7f2"/>
+    <title>{title ? `${title} — Desk Edit` : 'Desk Edit — Make room for better work'}</title>
+    <meta name="description" content={description}/>
+    {canonical && <link rel="canonical" href={canonical}/>}
+    {(noindex || settings.preview) && <meta name="robots" content="noindex, nofollow"/>}
+    <meta property="og:title" content={title || 'Desk Edit — Make room for better work'}/>
+    <meta property="og:description" content={description}/>
+    <meta property="og:type" content="website"/>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+    <slot name="head"/>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="logo" href="/" aria-label="Desk Edit home">desk edit<span class="logo-dot">.</span></a>
+        <nav class="desktop-nav" aria-label="Main navigation">
+          <a href="/guides/" aria-current={active==='/guides/' ? 'page' : undefined}>The guides</a>
+          <a href="/comparisons/" aria-current={active==='/comparisons/' ? 'page' : undefined}>Comparisons</a>
+          <a href="/editorial-policy/">Our approach</a>
+        </nav>
+        <div class="header-actions">
+          <a href="/search/" class="icon-button" aria-label="Search guides"><Icon name="search"/></a>
+          <a href="/guides/" class="button small header-cta">Find your focus <Icon size={17}/></a>
+          <button class="icon-button menu-toggle" aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav"><Icon name="menu"/></button>
+        </div>
+      </div>
+      <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile navigation" hidden><a href="/guides/">The guides</a><a href="/comparisons/">Comparisons</a><a href="/reviews/">Reviews</a><a href="/editorial-policy/">Our approach</a><a href="/about/">About Desk Edit</a></nav>
+    </header>
+    <main id="main"><slot/></main>
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div class="footer-brand"><a class="logo" href="/">desk edit<span class="logo-dot">.</span></a><p>A considered workspace.<br/>A better everyday.</p><span class="footer-note">Independent editorial for the home office.</span></div>
+        <div><h2>Explore</h2><a href="/guides/">All guides</a><a href="/comparisons/">Comparisons</a><a href="/reviews/">Product reviews</a><a href="/search/">Search</a></div>
+        <div><h2>Desk Edit</h2><a href="/about/">About us</a><a href="/editorial-policy/">Editorial policy</a><a href="/contact/">Contact & corrections</a></div>
+        <div><h2>The details</h2><a href="/privacy/">Privacy</a><a href="/affiliate-disclosure/">Affiliate disclosure</a>{settings.preview && <span class="preview-label">Editorial draft preview</span>}</div>
+      </div>
+      <div class="container footer-bottom"><p>© {new Date().getFullYear()} Desk Edit</p><p>{settings.affiliateMode==='affiliate' && settings.associateTag && settings.siteRegistered ? settings.disclosure : 'Editorial guides. No active affiliate links.'}</p><span>Made for a little more focus.</span></div>
+    </footer>
+    <script>
+      const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle');
+      const menu = document.querySelector<HTMLElement>('#mobile-nav');
+      toggle?.addEventListener('click', () => { if (!menu) return; const expanded=toggle.getAttribute('aria-expanded')==='true'; toggle.setAttribute('aria-expanded',String(!expanded)); toggle.setAttribute('aria-label',expanded?'Open navigation':'Close navigation'); menu.hidden=expanded; });
+      document.addEventListener('keydown',(event)=>{if(event.key==='Escape' && toggle?.getAttribute('aria-expanded')==='true'){ toggle.click(); toggle.focus(); }});
+    </script>
+  </body>
+</html>

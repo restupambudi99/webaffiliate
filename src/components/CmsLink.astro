@@ -1,0 +1,11 @@
+---
+import { safeBodyHref } from '../lib/cms-policy';
+
+interface Props {
+  node: { markDef?: { href?: unknown; blank?: boolean; [key: string]: unknown }; [key: string]: unknown };
+}
+const { node } = Astro.props;
+const href = safeBodyHref(node.markDef?.href);
+const blank = node.markDef?.blank === true;
+---
+{href ? <a href={href} target={blank ? '_blank' : undefined} rel={blank ? 'noopener noreferrer' : undefined}><slot /></a> : <span><slot /></span>}

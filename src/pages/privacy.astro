@@ -1,0 +1,31 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { settings } from '../lib/settings';
+const affiliateActive = settings.affiliateMode === 'affiliate' && Boolean(settings.associateTag) && settings.siteRegistered;
+---
+<Layout title="Privacy" description="The current Desk Edit data practices, including local search, administrator access, and information to verify before production.">
+  <div class="container policy-page">
+    <header class="page-heading">
+      <p class="eyebrow">Privacy</p>
+      <h1>A small site.<br/>A clear account of data.</h1>
+      <p>This notice describes the current website configuration.</p>
+    </header>
+    <div class="prose">
+      <div class="correction-box">
+        <p>Production hosting and publisher details are still being finalized. The hosting provider, log retention, and contact for privacy requests must be verified and added before public launch. This preview notice is not a completed production privacy notice.</p>
+      </div>
+      <h2>Reading and searching</h2>
+      <p>The current visitor pages have no analytics service, advertising scripts, newsletter signup, shopping account, or contact form. The website does not ask readers to create an account. The site uses system fonts and serves illustration assets with the website.</p>
+      <p>Search checks the site’s own editorial content. A search term appears in the page URL as a query parameter. URLs may remain in your browser history and may be recorded in hosting access logs. Do not put personal or sensitive information into a search.</p>
+      <h2>Hosting and technical logs</h2>
+      <p>A hosting provider may process technical request information to deliver and protect the site, such as IP addresses, requested URLs, browser details, and request times. The production provider’s actual fields, purposes, access, and retention period have not yet been confirmed. We cannot currently state a retention period or deletion process for those logs.</p>
+      <h2>Cookies and administrator access</h2>
+      <p>The current public pages do not set analytics, advertising, or visitor-account cookies. The CMS administrator area may use authentication and session cookies for authorized editors. Those administrator functions are separate from reading the public guides. Their exact behavior must be checked with the deployed CMS configuration.</p>
+      <h2>Contact and external websites</h2>
+      <p>If you email the publisher, the email provider will process the message and its normal delivery information. The provider and editorial correspondence retention still need to be recorded. Share only information necessary for your question.</p>
+      <p>Reference links take you to other websites when you choose to open them. Those websites apply their own data practices. {affiliateActive ? 'Amazon paid links are explained in our affiliate disclosure.' : 'There are no active affiliate links or affiliate click-tracking scripts in the current editorial-only configuration.'}</p>
+      <h2>Questions and changes</h2>
+      <p>Visit <a class="text-link" href="/contact/">contact and corrections</a> for the configured publisher address. This notice must be reviewed when hosting or data features change. Adding analytics, advertising, or signup tools requires an updated account of what they collect and any visitor choices they require.</p>
+    </div>
+  </div>
+</Layout>

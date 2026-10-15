@@ -1,0 +1,40 @@
+import { createRequire } from 'node:module';
+import { mkdir, writeFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const bundled=createRequire('C:/Users/Meta/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/package.json');
+const {chromium}=bundled('playwright');
+const browser=await chromium.launch({headless:true,channel:'msedge'});
+const page=await browser.newPage();
+const errors=[];page.on('pageerror',error=>errors.push(error.message));
+const base=process.env.QA_BASE_URL || 'http://127.0.0.1:4321';
+await mkdir('artifacts',{recursive:true});
+const results=[];
+for(const width of [360,768,1440]){
+  await page.setViewportSize({width,height:1000});
+  await page.goto(base+'/',{waitUntil:'networkidle'});
+  assert.equal(await page.title(),'Desk Edit — Make room for better work');
+  assert.equal(await page.locator('meta[name=robots]').getAttribute('content'),'noindex, nofollow');
+  assert.equal(await page.locator('.hero-photo').evaluate(img=>img.complete&&img.naturalWidth>0),true);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`Home overflows at ${width}`);
+  await page.screenshot({path:`artifacts/home-${width}.png`,fullPage:true});
+  await page.goto(base+'/articles/small-space-desk-setup/',{waitUntil:'networkidle'});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`Article overflows at ${width}`);
+  assert.match(await page.locator('main').innerText(),/Editorial draft preview/);
+  assert.equal(await page.locator('a[rel~=sponsored]').count(),0);
+  results.push({width,homeOverflow:false,articleOverflow:false,heroLoaded:true});
+}
+await page.setViewportSize({width:360,height:800});await page.goto(base+'/');
+await page.getByRole('button',{name:'Open navigation'}).click();
+assert.equal(await page.locator('#mobile-nav').isVisible(),true);
+await page.keyboard.press('Escape');assert.equal(await page.locator('#mobile-nav').isVisible(),false);
+await page.goto(base+'/guides/?category=lighting');assert.equal(await page.locator('.guide-card').count(),1);
+await page.goto(base+'/search/');await page.getByRole('searchbox',{name:'Search guides'}).fill('lamp');await page.getByRole('button',{name:'Search',exact:true}).click();
+assert.match(await page.locator('.search-count').innerText(),/[1-9]\d* guides? found/);
+await page.goto(base+'/search/?q=unlikely-no-match-908');assert.equal(await page.locator('.guide-card').count(),0);assert.match(await page.locator('main').innerText(),/No guides found/);
+const paths=['/guides/','/comparisons/','/reviews/','/about/','/contact/','/privacy/','/affiliate-disclosure/','/editorial-policy/','/_emdash/admin/'];
+for(const path of paths){const response=await page.goto(base+path,{waitUntil:'domcontentloaded'});assert.equal(response.status(),200,path);}
+const notFound=await page.goto(base+'/articles/does-not-exist/');assert.equal(notFound.status(),404);
+assert.deepEqual(errors,[]);
+const report={testedAt:new Date().toISOString(),browser:'Microsoft Edge headless',viewports:results,navigation:'passed',categoryFilter:'passed',search:'passed',notFound:'passed',cmsSetupRoute:'passed',browserErrors:errors};
+await writeFile('artifacts/browser-qa.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+await browser.close();

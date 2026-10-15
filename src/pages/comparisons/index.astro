@@ -1,0 +1,7 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import GuideCard from '../../components/GuideCard.astro';
+import { getGuides } from '../../lib/content';
+const comparisons=(await getGuides()).filter((guide)=>['laptop-stand-vs-monitor-arm','desk-organizers','compact-keyboards','monitor-arm-fit'].includes(guide.slug));
+---
+<Layout title="Comparisons" description="Compare home office choices by your needs, compatibility, and space, with clear limits and tradeoffs."><div class="container"><header class="page-heading"><p class="eyebrow">UNDERSTAND THE TRADEOFFS</p><h1>Two options.<br/>Your best fit.</h1><p>The useful comparison starts with your needs. See how workspace choices differ, what to check, and when each option makes sense.</p></header><section class="listing"><div class="guide-grid">{comparisons.map((guide,index)=><GuideCard guide={guide} index={index}/>)}</div>{!comparisons.length && <div class="empty-state"><h2>Comparisons are in preparation.</h2><p>We publish comparisons after reviewing the evidence behind each option.</p></div>}</section></div></Layout>

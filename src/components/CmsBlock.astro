@@ -1,0 +1,18 @@
+---
+import type { BlockProps } from 'astro-portabletext/types';
+import { headingId } from '../lib/content';
+
+type Props = BlockProps;
+const { node } = Astro.props;
+const text = node.children.map((child) => 'text' in child && typeof child.text === 'string' ? child.text : '').join('');
+const isHeading = /^h[1-6]$/.test(node.style);
+const Tag = node.style as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+const align = (node as typeof node & { textAlign?: string }).textAlign;
+const alignClass = ['center', 'right', 'justify'].includes(align || '') ? `has-text-align-${align}` : undefined;
+---
+{isHeading ? <Tag id={headingId(text, node._key)} class={alignClass}><slot /></Tag> : node.style === 'blockquote' ? <blockquote class={alignClass}><slot /></blockquote> : <p class={alignClass}><slot /></p>}
+<style>
+  .has-text-align-center { text-align: center; }
+  .has-text-align-right { text-align: right; }
+  .has-text-align-justify { text-align: justify; }
+</style>

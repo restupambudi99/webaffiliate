@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { settings } from '../lib/settings';
+---
+<Layout title="Contact & corrections" description="How to contact the Desk Edit publisher about an article, correction, or editorial question.">
+  <div class="container policy-page">
+    <header class="page-heading">
+      <p class="eyebrow">Contact & corrections</p>
+      <h1>Help make a guide<br/>more useful.</h1>
+      <p>Questions, missing context, and factual corrections belong here.</p>
+    </header>
+    <div class="prose">
+      <h2>Reach the publisher</h2>
+      {settings.contactEmail ? (
+        <p>Email <a class="text-link" href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a> for editorial questions or corrections. This opens your email application; this website does not collect a contact-form submission.</p>
+      ) : (
+        <div class="correction-box">
+          <p>The publisher’s contact address is awaiting configuration in this preview. A working editorial contact must be added before public launch. There is no active contact form and no message is submitted from this page.</p>
+        </div>
+      )}
+      <h2>Make a correction easy to review</h2>
+      <p>Include the article URL, the passage you want reviewed, and a short explanation. A link to the relevant manufacturer documentation or another original source helps resolve a factual question. For device compatibility, include the exact model rather than a general product name.</p>
+      <p>Send only the information needed to understand the issue. Avoid passwords, payment information, private account details, and other sensitive records.</p>
+      <h2>Orders and product support</h2>
+      <p>{settings.brand} publishes editorial guides. We do not process purchases, deliveries, returns, or warranties. Direct those questions to the seller or product manufacturer through their own support channels.</p>
+      <h2>How corrections are handled</h2>
+      <p>A proposed factual correction needs a source review before it changes an article. Material corrections should explain what changed and show the actual revision date. Read the <a class="text-link" href="/editorial-policy/">editorial policy</a> for the full approach.</p>
+    </div>
+  </div>
+</Layout>

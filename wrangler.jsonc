@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "desk-edit",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-10-14",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "d1_databases": [{ "binding": "DB", "database_name": "desk-edit-content" }],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "desk-edit-media" }],
+  "triggers": { "crons": ["* * * * *"] },
+  "observability": { "enabled": true }
+}

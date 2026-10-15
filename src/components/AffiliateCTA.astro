@@ -1,0 +1,8 @@
+---
+import { affiliateHref, settings, type ProductReference } from '../lib/settings';
+import Icon from './Icon.astro';
+interface Props { product: ProductReference }
+const { product } = Astro.props;
+const href = affiliateHref(product);
+---
+{href && <div class="affiliate-cta"><p>This is a paid link. We may earn a commission from qualifying purchases. {settings.disclosure}</p><a class="button" href={href} rel="sponsored nofollow noopener" target="_blank">View {product.label} on Amazon (paid link) <Icon name="external"/></a></div>}

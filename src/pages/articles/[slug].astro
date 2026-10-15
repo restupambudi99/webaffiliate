@@ -1,0 +1,29 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import GuideCard from '../../components/GuideCard.astro';
+import { PortableText } from 'emdash/ui';
+import CmsBlock from '../../components/CmsBlock.astro';
+import CmsLink from '../../components/CmsLink.astro';
+import AffiliateCTA from '../../components/AffiliateCTA.astro';
+import { getGuide, getGuides } from '../../lib/content';
+import { categories } from '../../data/guides';
+import { settings } from '../../lib/settings';
+const guide=await getGuide(Astro.params.slug || '');
+if(!guide) return Astro.rewrite('/404/');
+const related=(await getGuides()).filter((other)=>other.slug!==guide.slug).sort((a,b)=>Number(b.category===guide.category)-Number(a.category===guide.category)).slice(0,3);
+const sectionId=(text:string)=>text.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const date=(value:string)=>new Intl.DateTimeFormat('en-US',{dateStyle:'medium',timeZone:'UTC'}).format(new Date(value));
+const hasAffiliate=settings.affiliateMode==='affiliate' && settings.associateTag && settings.siteRegistered;
+---
+<Layout title={guide.title} description={guide.summary} noindex={guide.isPreview || guide.reviewStatus==='draft'}>
+  <div class="container"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/guides/">The guides</a><span aria-hidden="true">/</span><a href={`/guides/?category=${guide.category}`}>{categories[guide.category].title}</a></nav>
+  <header class="article-header"><p class="eyebrow">{categories[guide.category].title} · {guide.evidenceType}</p><h1>{guide.title}</h1><p class="summary">{guide.summary}</p><div class="article-meta"><span>{guide.author ? `By ${guide.author}` : 'Desk Edit editorial draft'}</span><span>{guide.readingMinutes} min read</span>{guide.publishedAt && <time datetime={guide.publishedAt}>Published {date(guide.publishedAt)}</time>}{guide.updatedAt && guide.updatedAt!==guide.publishedAt && <time datetime={guide.updatedAt}>Updated {date(guide.updatedAt)}</time>}</div>
+  {(guide.isPreview || guide.reviewStatus==='draft') && <p class="article-notice">Editorial draft preview. This guide is awaiting source, author, and editorial review. It is a planning guide, with no claim of hands-on product testing.</p>}
+  {hasAffiliate ? <p class="article-notice">This page may contain paid links. We may earn a commission from qualifying purchases. {settings.disclosure}</p> : <p class="article-notice">An independent editorial guide. There are no active affiliate links on this page.</p>}
+  </header><div class="article-layout"><aside class="toc" aria-label="On this page"><h2>In this guide</h2>{guide.sections.map((section)=><a href={`#${section.anchorId || sectionId(section.heading)}`}>{section.heading}</a>)}<a href="#sources">Sources & limitations</a></aside>
+  <article class="prose">{guide.body?.length ? <PortableText value={guide.body} components={{block:CmsBlock,mark:{link:CmsLink}}}/> : guide.sections.map((section)=><section><h2 id={sectionId(section.heading)}>{section.heading}</h2>{section.paragraphs.map((paragraph)=><p>{paragraph}</p>)}{section.bullets?.length && <ul>{section.bullets.map((bullet)=><li>{bullet}</li>)}</ul>}</section>)}
+  {guide.productReferences?.map(product=><AffiliateCTA product={product}/>)}
+  <section class="sources" id="sources"><h2>Sources & limitations</h2><p>This guide explains a decision framework. Check the current specifications and instructions for your exact product and setup before purchase or installation.</p>{guide.sources.length ? <ul>{guide.sources.map((source)=><li><a href={source.url} rel="noopener" target="_blank">{source.label}</a></li>)}</ul> : <p>This draft presents original planning advice. Source and evidence review is still required before publication.</p>}<p class="status-note">Hero photography is an AI-generated workspace illustration. It does not document product testing.</p></section>
+  <div class="correction-box"><h3>Something we should look at again?</h3><p>Clear advice gets better with useful corrections. Tell us which guide and which detail needs another look.</p><a class="text-link" href="/contact/">Contact the editorial desk →</a></div></article></div></div>
+  <section class="related"><div class="container"><div class="section-heading"><div><p class="eyebrow">KEEP EXPLORING</p><h2>A little more to consider.</h2></div></div><div class="guide-grid">{related.map((other,index)=><GuideCard guide={other} index={index}/>)}</div></div></section>
+</Layout>

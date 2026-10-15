@@ -1,0 +1,34 @@
+import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
+import react from '@astrojs/react';
+import emdash, { local } from 'emdash/astro';
+import { sqlite } from 'emdash/db';
+import { fileURLToPath } from 'node:url';
+
+try { process.loadEnvFile('.env'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+const site = process.env.SITE_URL || process.env.EMDASH_SITE_URL;
+
+export default defineConfig({
+  output: 'server',
+  site: site || undefined,
+  trailingSlash: 'ignore',
+  devToolbar: { enabled: false },
+  adapter: node({ mode: 'standalone' }),
+  integrations: [
+    react(),
+    emdash({
+      database: sqlite({ url: process.env.EMDASH_DATABASE_URL || 'file:./data.db' }),
+      storage: local({ directory: process.env.EMDASH_UPLOADS_DIR || './uploads', baseUrl: '/_emdash/api/media/file' }),
+      siteUrl: site || undefined,
+      mcp: false,
+      plugins: [{
+        id: 'desk-edit-editorial-gate',
+        version: '1.0.0',
+        capabilities: ['hooks.content-policy:register'],
+        entrypoint: fileURLToPath(new URL('./src/plugins/editorial-gate.ts', import.meta.url)).replaceAll('\\', '/'),
+        format: 'native',
+      }],
+    }),
+  ],
+  vite: { server: { strictPort: true } },
+});

@@ -1,0 +1,9 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Icon from '../../components/Icon.astro';
+import GuideCard from '../../components/GuideCard.astro';
+import { searchGuides } from '../../lib/content';
+const query=(Astro.url.searchParams.get('q') || '').trim().slice(0,120);
+const guides=await searchGuides(query);
+---
+<Layout title={query?`Search: ${query}`:'Find your next guide'} noindex={Boolean(query)}><div class="container"><header class="page-heading"><p class="eyebrow">FIND A LITTLE CLARITY</p><h1>What’s on your desk?</h1><p>Search our editorial library for the next choice you’re working through.</p></header><section class="listing"><form class="search-form" role="search" action="/search/" method="get"><label for="search-query" class="screen-reader-only">Search guides</label><div class="search-field"><Icon name="search"/><input type="search" name="q" id="search-query" value={query} maxlength="120" placeholder="Try lighting, cables, or small spaces"/></div><button type="submit" class="button">Search</button></form><p class="search-count" role="status">{query?`${guides.length} ${guides.length===1?'guide':'guides'} found for “${query}”`:'Explore all guides, or search for a topic.'}</p>{guides.length?<div class="guide-grid">{guides.map((guide,index)=><GuideCard guide={guide} index={index}/>)}</div>:<div class="empty-state"><h2>No guides found this time.</h2><p>Try a shorter phrase such as “desk”, “lamp”, or “keyboard”, or browse the full library.</p><a href="/guides/" class="text-link">Browse all guides <Icon/></a></div>}</section></div></Layout>
