@@ -2,22 +2,17 @@
 import Layout from '../layouts/Layout.astro';
 import { settings } from '../lib/settings';
 ---
-<Layout title="Contact & corrections" description="How to contact the Desk Edit publisher about an article, correction, or editorial question.">
+<Layout title="Contact & corrections" description="Contact the Desk Edit publisher about editorial questions, corrections, or privacy requests for the website and serversiderestu app.">
   <div class="container policy-page">
     <header class="page-heading">
       <p class="eyebrow">Contact & corrections</p>
       <h1>Help make a guide<br/>more useful.</h1>
-      <p>Questions, missing context, and factual corrections belong here.</p>
+      <p>Questions, factual corrections, and privacy requests belong here.</p>
     </header>
     <div class="prose">
       <h2>Reach the publisher</h2>
-      {settings.contactEmail ? (
-        <p>Email <a class="text-link" href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a> for editorial questions or corrections. This opens your email application; this website does not collect a contact-form submission.</p>
-      ) : (
-        <div class="correction-box">
-          <p>The publisher’s contact address is awaiting configuration in this preview. A working editorial contact must be added before public launch. There is no active contact form and no message is submitted from this page.</p>
-        </div>
-      )}
+      <p>Email <a class="text-link" href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a> for editorial questions, corrections, or privacy requests about this website or the serversiderestu app. This opens your email application; this website does not collect a contact-form submission.</p>
+      <p>For a privacy request, say whether it concerns Desk Edit or serversiderestu and include only the details needed to identify the issue. Do not send Pinterest access tokens, app secrets, passwords, or other sensitive credentials. Read the <a class="text-link" href="/privacy/">privacy policy</a> for the website and app’s data practices.</p>
       <h2>Make a correction easy to review</h2>
       <p>Include the article URL, the passage you want reviewed, and a short explanation. A link to the relevant manufacturer documentation or another original source helps resolve a factual question. For device compatibility, include the exact model rather than a general product name.</p>
       <p>Send only the information needed to understand the issue. Avoid passwords, payment information, private account details, and other sensitive records.</p>

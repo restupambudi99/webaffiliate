@@ -47,7 +47,7 @@ const active = Astro.url.pathname;
         <div class="footer-brand"><a class="logo" href="/">desk edit<span class="logo-dot">.</span></a><p>A considered workspace.<br/>A better everyday.</p><span class="footer-note">Independent editorial for the home office.</span></div>
         <div><h2>Explore</h2><a href="/guides/">All guides</a><a href="/comparisons/">Comparisons</a><a href="/reviews/">Product reviews</a><a href="/search/">Search</a></div>
         <div><h2>Desk Edit</h2><a href="/about/">About us</a><a href="/editorial-policy/">Editorial policy</a><a href="/contact/">Contact & corrections</a></div>
-        <div><h2>The details</h2><a href="/privacy/">Privacy</a><a href="/affiliate-disclosure/">Affiliate disclosure</a>{settings.preview && <span class="preview-label">Editorial draft preview</span>}</div>
+        <div><h2>The details</h2><a href="/privacy/">Privacy policy</a><a href="/affiliate-disclosure/">Affiliate disclosure</a>{settings.preview && <span class="preview-label">Editorial draft preview</span>}</div>
       </div>
       <div class="container footer-bottom"><p>© {new Date().getFullYear()} Desk Edit</p><p>{settings.affiliateMode==='affiliate' && settings.associateTag && settings.siteRegistered ? settings.disclosure : 'Editorial guides. No active affiliate links.'}</p><span>Made for a little more focus.</span></div>
     </footer>
